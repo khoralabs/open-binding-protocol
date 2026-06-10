@@ -4,7 +4,7 @@ import type { JsonDocument } from "@khoralabs/obp-model";
 import { assertBindPolicyJsonSchema, getBindPayloadValidator } from "./ajv-compile-bind-schema";
 import { formatAjvErrorsForAgent } from "./format-ajv-errors";
 
-function policyIsActive(bindPolicy: JsonDocument | null): boolean {
+export function policyIsActive(bindPolicy: JsonDocument | null): boolean {
   return (
     bindPolicy !== null &&
     typeof bindPolicy === "object" &&
@@ -21,6 +21,18 @@ function isEmptyBindPayload(raw: unknown): boolean {
     return false;
   }
   return Object.keys(raw as object).length === 0;
+}
+
+/**
+ * Compile-check an active **`bind_policy`** at expose time (strict JSON Schema draft 2020-12).
+ * @throws {ObpError} **`VALIDATION`** when the schema is ill-formed or uses unknown keywords.
+ */
+export function validateBindPolicyAtExpose(bindPolicy: JsonDocument | null): void {
+  if (!policyIsActive(bindPolicy)) {
+    return;
+  }
+  assertBindPolicyJsonSchema(bindPolicy);
+  getBindPayloadValidator(bindPolicy);
 }
 
 /**

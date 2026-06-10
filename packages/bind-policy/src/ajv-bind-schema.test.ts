@@ -88,4 +88,13 @@ describe("AJV bind_payload schemas", () => {
       validateNbcBindPayloadForPort({ type: "object", properties: "bad" } as JsonDocument, {}),
     ).toThrow();
   });
+
+  test("strict mode rejects unknown schema keywords", () => {
+    expect(() =>
+      getBindPayloadValidator({
+        type: "object",
+        notARealKeyword: true,
+      }),
+    ).toThrow(/strict mode|unknown keyword|Invalid bind_policy/i);
+  });
 });

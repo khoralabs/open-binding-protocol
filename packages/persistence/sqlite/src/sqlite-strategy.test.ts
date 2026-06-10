@@ -71,6 +71,27 @@ describe("SqliteObpPersistenceStrategy", () => {
     }
   });
 
+  test("exposePort rejects invalid bind_policy at expose time", async () => {
+    const client = makeClient();
+    const { party } = await client.registerParty({ name: "Policy" });
+    const { offer } = await client.extendOffer({
+      partyId: party.id,
+      offer: { id: "", type: "step" },
+      bindPortId: "",
+      bind_payload: null,
+    });
+    await expect(
+      client.exposePort({
+        offerId: offer.id,
+        port: { id: "", type: "slot", promise: "p", ref: "" },
+        bind_policy: {
+          type: "object",
+          notARealKeyword: true,
+        },
+      }),
+    ).rejects.toThrow(/bind_policy|strict|unknown keyword/i);
+  });
+
   test("exposePort persists max_bindings default 1", async () => {
     const client = makeClient();
     const { party } = await client.registerParty({ name: "Erin" });

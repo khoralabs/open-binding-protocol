@@ -4,7 +4,7 @@ import Ajv2020 from "ajv/dist/2020.js";
 
 import { stableStringify } from "./stable-stringify";
 
-const ajv = new Ajv2020({ allErrors: true, strict: false });
+const ajv = new Ajv2020({ allErrors: true, strict: true });
 const compileCache = new Map<string, ValidateFunction>();
 
 /** Prevent unbounded growth when many distinct policies appear in one process. */

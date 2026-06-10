@@ -128,6 +128,7 @@
       "name": "@khoralabs/obp-persistence",
       "version": "0.0.0",
       "dependencies": {
+        "@khoralabs/nbc-bind-policy": "workspace:*",
         "@khoralabs/obp-errors": "workspace:*",
         "@khoralabs/obp-model": "workspace:*",
       },
@@ -145,6 +146,7 @@
       "name": "@khoralabs/obp-sqlite-persistence",
       "version": "0.0.0",
       "dependencies": {
+        "@khoralabs/nbc-bind-policy": "workspace:*",
         "@khoralabs/obp-errors": "workspace:*",
         "@khoralabs/obp-model": "workspace:*",
         "@khoralabs/obp-persistence": "workspace:*",
@@ -265,6 +267,8 @@
 
     "@khoralabs/duplex-byte-stream": ["@khoralabs/duplex-byte-stream@workspace:packages/duplex-byte-stream"],
 
+    "@khoralabs/nbc-bind-policy": ["@khoralabs/nbc-bind-policy@workspace:packages/bind-policy"],
+
     "@khoralabs/obp-errors": ["@khoralabs/obp-errors@workspace:packages/errors/impl/ts"],
 
     "@khoralabs/obp-frame-relay": ["@khoralabs/obp-frame-relay@workspace:packages/frame-relay/impl/ts"],
@@ -278,8 +282,6 @@
     "@khoralabs/obp-model": ["@khoralabs/obp-model@workspace:packages/model/impl/ts"],
 
     "@khoralabs/obp-nbc": ["@khoralabs/obp-nbc@workspace:packages/nbc/impl/ts"],
-
-    "@khoralabs/nbc-bind-policy": ["@khoralabs/nbc-bind-policy@workspace:packages/bind-policy"],
 
     "@khoralabs/obp-persistence": ["@khoralabs/obp-persistence@workspace:packages/persistence/impl/ts"],
 

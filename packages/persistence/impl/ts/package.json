@@ -15,6 +15,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@khoralabs/nbc-bind-policy": "workspace:*",
     "@khoralabs/obp-errors": "workspace:*",
     "@khoralabs/obp-model": "workspace:*"
   },

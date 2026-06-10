@@ -1,4 +1,5 @@
 import type { Database, Statement } from "bun:sqlite";
+import { validateBindPolicyAtExpose } from "@khoralabs/nbc-bind-policy";
 import { ObpError } from "@khoralabs/obp-errors";
 import type { JsonDocument, Offer, Party, Port } from "@khoralabs/obp-model";
 import type {
@@ -307,6 +308,8 @@ export class SqliteObpPersistenceStrategy implements ObpPersistenceStrategy {
         this.insertExpose.run(exId, input.offerId, portId, seq);
         return { port: rowToPort(existingRow) };
       }
+
+      validateBindPolicyAtExpose(input.bind_policy ?? null);
 
       const map = this.loadPortsMap();
       map.set(port.id, port);

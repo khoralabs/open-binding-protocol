@@ -1,3 +1,4 @@
+import { validateBindPolicyAtExpose } from "@khoralabs/nbc-bind-policy";
 import { ObpError } from "@khoralabs/obp-errors";
 import type { JsonDocument, Offer, Party, Port } from "@khoralabs/obp-model";
 import { assertCanonicalBindCapacity, normalizeMaxBindings } from "./bind-capacity";
@@ -156,6 +157,8 @@ export class InMemoryObpPersistenceStrategy implements ObpPersistenceStrategy {
       this.exposes.push({ offerId: input.offerId, portId });
       return { port: existing };
     }
+
+    validateBindPolicyAtExpose(input.bind_policy ?? null);
 
     const map = new Map(this.ports);
     map.set(port.id, port);
