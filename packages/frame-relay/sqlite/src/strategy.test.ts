@@ -22,4 +22,40 @@ describe("createSqliteFrameRelayStoreStrategy", () => {
     store.deleteChannelAdmission("ch-1");
     expect(store.getPairingSecretIfActive("ch-1", now)).toBeUndefined();
   });
+
+  test("enqueue stays within maxFramesPerChannel", () => {
+    const db = new Database(":memory:");
+    const store = createSqliteFrameRelayStoreStrategy(db, {
+      spoolLimits: {
+        maxFramesPerChannel: 2,
+        maxBytesPerChannel: 1024 * 1024,
+        maxReplayFrames: 1024,
+        maxReplayBytes: 1024 * 1024,
+      },
+    });
+    store.enqueueRelayedFrame("ch", new Uint8Array([1]));
+    store.enqueueRelayedFrame("ch", new Uint8Array([2]));
+    store.enqueueRelayedFrame("ch", new Uint8Array([3]));
+    const rows = store.listRelayedFramesAfter("ch", 0);
+    expect(rows).toHaveLength(2);
+    expect(rows[0]?.bytes[0]).toBe(2);
+    expect(rows[1]?.bytes[0]).toBe(3);
+  });
+
+  test("purgeExpiredChannels removes expired admission and frames", () => {
+    const db = new Database(":memory:");
+    const store = createSqliteFrameRelayStoreStrategy(db);
+    const now = 1_000_000;
+    store.upsertChannelAdmission({
+      channelId: "expired",
+      pairingSecretHex: "aa",
+      createdAtMs: now - 10_000,
+      expiresAtMs: now - 1,
+    });
+    store.enqueueRelayedFrame("expired", new Uint8Array([9]));
+
+    expect(store.purgeExpiredChannels(now)).toBe(1);
+    expect(store.getPairingSecretIfActive("expired", now)).toBeUndefined();
+    expect(store.listRelayedFramesAfter("expired", 0)).toHaveLength(0);
+  });
 });

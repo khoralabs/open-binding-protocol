@@ -12,8 +12,19 @@ export function ensureFrameRelayStoreSchema(db: Database): void {
     CREATE TABLE IF NOT EXISTS room_frames (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       channel_id TEXT NOT NULL,
-      bytes BLOB NOT NULL
+      bytes BLOB NOT NULL,
+      byte_length INTEGER NOT NULL
     );
     CREATE INDEX IF NOT EXISTS idx_room_frames_channel_id ON room_frames(channel_id);
   `);
+  ensureByteLengthColumn(db);
+}
+
+function ensureByteLengthColumn(db: Database): void {
+  const cols = db.prepare(`PRAGMA table_info(room_frames)`).all() as { name: string }[];
+  if (cols.some((c) => c.name === "byte_length")) {
+    return;
+  }
+  db.run(`ALTER TABLE room_frames ADD COLUMN byte_length INTEGER NOT NULL DEFAULT 0`);
+  db.run(`UPDATE room_frames SET byte_length = length(bytes) WHERE byte_length = 0`);
 }

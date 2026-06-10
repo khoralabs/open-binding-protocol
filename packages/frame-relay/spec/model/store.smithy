@@ -11,6 +11,8 @@ use smithy.api#Unit
 The hub runtime (`@khoralabs/obp-frame-relay`) attaches live peers and fans out bytes; this service models **only** the persistence surface backends must implement. Payload bytes are **opaque** at this layer (relay stamping policy is **`khora.obp.frame.relay#RelayEnvelope`** in the hub runtime).
 
 Reference SQLite table names: `rooms` (channel admission), `room_frames` (relayed byte spool).
+
+**Spool policy (reference TS):** `EnqueueRelayedFrame` applies a per-channel ring buffer (default max 1024 frames / 16 MiB). Oldest frames are dropped when limits are exceeded. Deployments SHOULD run `PurgeExpiredChannels` periodically to reclaim disk for expired admissions.
 """)
 service FrameRelayStore {
     version: "2026-06-01"
@@ -21,6 +23,7 @@ service FrameRelayStore {
         ListRelayedFramesAfter
         PurgeRelayedFramesForChannel
         DeleteChannelAdmission
+        PurgeExpiredChannels
     ]
 }
 
@@ -94,4 +97,12 @@ structure DeleteChannelAdmissionInput {
 
 structure DeleteChannelAdmissionOutput {
     @documentation("Empty success.")
+}
+
+structure PurgeExpiredChannelsInput {
+    now_ms: Long
+}
+
+structure PurgeExpiredChannelsOutput {
+    channels_purged: Integer
 }

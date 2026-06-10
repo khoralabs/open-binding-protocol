@@ -3,16 +3,23 @@ import {
   signChannelTicket,
   verifyChannelTicket,
 } from "@khoralabs/duplex-byte-stream";
-import type { FrameRelayHubPort, FrameRelayPeer } from "./hub-port";
+import type { AttachPeerOptions, FrameRelayHubPort, FrameRelayPeer } from "./hub-port";
 import { relayOutBytesForMessage } from "./relay-envelope";
+import {
+  capReplayTail,
+  DEFAULT_FRAME_RELAY_SPOOL_LIMITS,
+  type FrameRelaySpoolLimits,
+} from "./spool-limits";
 import type { FrameRelayStoreStrategy } from "./store-types";
 
 export type CreateFrameRelayHubOptions = {
   store: FrameRelayStoreStrategy;
+  spoolLimits?: FrameRelaySpoolLimits;
 };
 
 export function createFrameRelayHub(options: CreateFrameRelayHubOptions): FrameRelayHubPort {
   const { store } = options;
+  const spoolLimits = options.spoolLimits ?? DEFAULT_FRAME_RELAY_SPOOL_LIMITS;
   const peers = new Map<string, Set<FrameRelayPeer>>();
 
   const getPeerSet = (channelId: string): Set<FrameRelayPeer> => {
@@ -77,14 +84,20 @@ export function createFrameRelayHub(options: CreateFrameRelayHubOptions): FrameR
       return verifyTicketForChannel(channelId, ticket);
     },
 
-    async attachPeer(channelId: string, peer: FrameRelayPeer, ticket: string): Promise<void> {
+    async attachPeer(
+      channelId: string,
+      peer: FrameRelayPeer,
+      ticket: string,
+      attachOptions?: AttachPeerOptions,
+    ): Promise<void> {
       const ok = await verifyTicketForChannel(channelId, ticket);
       if (!ok) {
         throw new Error(`FrameRelayHub: invalid or expired ticket for channel: ${channelId}`);
       }
       const set = getPeerSet(channelId);
       set.add(peer);
-      const replay = store.listRelayedFramesAfter(channelId, 0);
+      const afterId = attachOptions?.replayAfterFrameId ?? 0;
+      const replay = capReplayTail(store.listRelayedFramesAfter(channelId, afterId), spoolLimits);
       for (const row of replay) {
         peer.send(row.bytes);
       }
@@ -114,6 +127,10 @@ export function createFrameRelayHub(options: CreateFrameRelayHubOptions): FrameR
       for (const peer of set) {
         peer.send(out);
       }
+    },
+
+    purgeExpiredChannels(nowMs = Date.now()): number {
+      return store.purgeExpiredChannels(nowMs);
     },
   };
 }

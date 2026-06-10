@@ -3,6 +3,11 @@ export type FrameRelayPeer = {
   send(bytes: Uint8Array): void;
 };
 
+export type AttachPeerOptions = {
+  /** Incremental replay cursor (store frame id). Default 0. */
+  replayAfterFrameId?: number;
+};
+
 /** HMAC-ticket gated byte relay: create channel, verify ticket, attach/replay, relay opaque bytes. */
 export interface FrameRelayHubPort {
   createChannel(channelId: string, ttlMs?: number): Promise<{ ticket: string }>;
@@ -12,7 +17,14 @@ export interface FrameRelayHubPort {
   mintChannelTicket(channelId: string): Promise<{ ticket: string } | undefined>;
   verifyTicket(channelId: string, ticket: string): Promise<boolean>;
   /** Requires a hub-issued admission ticket; rejects invalid or expired tickets. */
-  attachPeer(channelId: string, peer: FrameRelayPeer, ticket: string): Promise<void>;
+  attachPeer(
+    channelId: string,
+    peer: FrameRelayPeer,
+    ticket: string,
+    options?: AttachPeerOptions,
+  ): Promise<void>;
   detachPeer(channelId: string, peer: FrameRelayPeer): void;
   relayBytes(channelId: string, from: FrameRelayPeer, bytes: Uint8Array): void;
+  /** Remove expired channel admissions and spooled frames; returns channels purged. */
+  purgeExpiredChannels(nowMs?: number): number;
 }

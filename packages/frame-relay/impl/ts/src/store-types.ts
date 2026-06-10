@@ -23,4 +23,6 @@ export interface FrameRelayStoreStrategy {
   listRelayedFramesAfter(channelId: string, afterId: number): RelayedFrameRecord[];
   purgeRelayedFramesForChannel(channelId: string): void;
   deleteChannelAdmission(channelId: string): void;
+  /** Remove expired admissions and their relayed frames; returns channels purged. */
+  purgeExpiredChannels(nowMs: number): number;
 }

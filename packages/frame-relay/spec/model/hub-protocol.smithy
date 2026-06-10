@@ -20,6 +20,8 @@ Deployments that **do not** use a hub relay **MUST NOT** be required to adopt th
 **Relationship to OBP framing:** Length-prefixed canonical JSON and **`init`** envelopes follow **`khora.obp.frame#NegotiationFrameProtocol`**; this policy only defines the JSON object shape between **`init`** messages when a relay is in use.
 
 **Admission tickets (mandatory):** Join proofs for hub channels are transport-scoped HMAC tickets (see reference TS in `@khoralabs/duplex-byte-stream`); they are **not** part of core OBP framing. Deployments **MUST** verify tickets before **`attachPeer`** (reference: `upgradeFrameRelayHubWebSocket` in `@khoralabs/obp-frame-relay`). Ungated attach allows any peer that knows **`channelId`** to replay and inject frames.
+
+**Bounded spool and replay:** The reference hub applies per-channel ring-buffer limits on enqueue and caps replay on attach (default tail: 1024 frames / 8 MiB). **`attachPeer`** MAY accept **`replay_after_frame_id`** for incremental catch-up. Expired channel admissions SHOULD be purged via **`PurgeExpiredChannels`** on a periodic job.
 """)
 structure RelayEnvelope {
     frame: Frame

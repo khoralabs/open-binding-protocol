@@ -231,6 +231,116 @@ describe("attachDuplexAsFrameRelayPeer", () => {
     await clientSide.close();
   });
 
+  test("relayBytes spool stays within maxFramesPerChannel", async () => {
+    const spoolLimits = {
+      maxFramesPerChannel: 2,
+      maxBytesPerChannel: 1024 * 1024,
+      maxReplayFrames: 1024,
+      maxReplayBytes: 1024 * 1024,
+    };
+    const store = new InMemoryFrameRelayStoreStrategy({ spoolLimits });
+    const hub = createFrameRelayHub({ store, spoolLimits });
+    const ticket = await channelTicket(hub, "room-cap");
+
+    const peer = { send() {} };
+    await hub.attachPeer("room-cap", peer, ticket);
+
+    const frame = {
+      p_hash: "a".repeat(64),
+      actor: "00",
+      sig: "s",
+      type: "TURN",
+      body: {},
+    };
+    const raw = encodeFramedJson(frame);
+    hub.relayBytes("room-cap", peer, raw);
+    hub.relayBytes("room-cap", peer, raw);
+    hub.relayBytes("room-cap", peer, raw);
+
+    expect(store.listRelayedFramesAfter("room-cap", 0)).toHaveLength(2);
+  });
+
+  test("attachPeer caps replay to maxReplayFrames", async () => {
+    const spoolLimits = {
+      maxFramesPerChannel: 100,
+      maxBytesPerChannel: 1024 * 1024,
+      maxReplayFrames: 2,
+      maxReplayBytes: 1024 * 1024,
+    };
+    const store = new InMemoryFrameRelayStoreStrategy({ spoolLimits });
+    const hub = createFrameRelayHub({ store, spoolLimits });
+    const ticket = await channelTicket(hub, "room-replay");
+
+    const peer = { send() {} };
+    await hub.attachPeer("room-replay", peer, ticket);
+    const frame = {
+      p_hash: "a".repeat(64),
+      actor: "00",
+      sig: "s",
+      type: "TURN",
+      body: {},
+    };
+    const raw = encodeFramedJson(frame);
+    hub.relayBytes("room-replay", peer, raw);
+    hub.relayBytes("room-replay", peer, raw);
+    hub.relayBytes("room-replay", peer, raw);
+
+    const received: number[] = [];
+    await hub.attachPeer(
+      "room-replay",
+      {
+        send(b) {
+          const len = new DataView(b.buffer, b.byteOffset, b.byteLength).getUint32(0, false);
+          received.push(len);
+        },
+      },
+      ticket,
+    );
+
+    expect(received).toHaveLength(2);
+  });
+
+  test("attachPeer replayAfterFrameId skips older frames", async () => {
+    const store = new InMemoryFrameRelayStoreStrategy();
+    const hub = createFrameRelayHub({ store });
+    const ticket = await channelTicket(hub, "room-cursor");
+
+    const peer = { send() {} };
+    await hub.attachPeer("room-cursor", peer, ticket);
+    const id1 = store.enqueueRelayedFrame("room-cursor", new Uint8Array([1]));
+    store.enqueueRelayedFrame("room-cursor", new Uint8Array([2]));
+
+    const received: Uint8Array[] = [];
+    await hub.attachPeer(
+      "room-cursor",
+      {
+        send(b) {
+          received.push(b);
+        },
+      },
+      ticket,
+      { replayAfterFrameId: id1 },
+    );
+
+    expect(received).toHaveLength(1);
+    expect(received[0]?.[0]).toBe(2);
+  });
+
+  test("purgeExpiredChannels removes expired channels", async () => {
+    const store = new InMemoryFrameRelayStoreStrategy();
+    const hub = createFrameRelayHub({ store });
+    const now = Date.now();
+    store.upsertChannelAdmission({
+      channelId: "old",
+      pairingSecretHex: "aa",
+      createdAtMs: now - 10_000,
+      expiresAtMs: now - 1,
+    });
+
+    expect(hub.purgeExpiredChannels(now)).toBe(1);
+    expect(store.getPairingSecretIfActive("old", now)).toBeUndefined();
+  });
+
   test("dispose closes duplex", async () => {
     const store = new InMemoryFrameRelayStoreStrategy();
     const hub = createFrameRelayHub({ store });
