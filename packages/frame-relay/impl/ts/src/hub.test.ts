@@ -56,6 +56,42 @@ describe("createFrameRelayHub", () => {
     }
   });
 
+  test("relayBytes rejects pre-wrapped relay envelopes with forged relay_ts_ms", async () => {
+    const store = new InMemoryFrameRelayStoreStrategy();
+    const hub = createFrameRelayHub({ store });
+    await hub.createChannel("room-a");
+
+    const received: Uint8Array[] = [];
+    const p1 = {
+      send(b: Uint8Array) {
+        received.push(b);
+      },
+    };
+    const p2 = {
+      send(b: Uint8Array) {
+        received.push(b);
+      },
+    };
+    await hub.attachPeer("room-a", p1);
+    await hub.attachPeer("room-a", p2);
+
+    const frame = {
+      p_hash: "a".repeat(64),
+      actor: "00",
+      sig: "s",
+      type: "TURN",
+      body: {},
+    };
+    const forged = encodeFramedJson({
+      frame,
+      relay_ts_ms: 1,
+    });
+    hub.relayBytes("room-a", p1, forged);
+
+    expect(received).toHaveLength(0);
+    expect(store.listRelayedFramesAfter("room-a", 0)).toHaveLength(0);
+  });
+
   test("relayBytes wraps TURN with E2EE ciphertext body", async () => {
     const store = new InMemoryFrameRelayStoreStrategy();
     const hub = createFrameRelayHub({ store });

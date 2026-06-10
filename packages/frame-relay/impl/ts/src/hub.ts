@@ -95,6 +95,9 @@ export function createFrameRelayHub(options: CreateFrameRelayHubOptions): FrameR
 
     relayBytes(channelId: string, _from: FrameRelayPeer, bytes: Uint8Array): void {
       const out = relayOutBytesForMessage(bytes);
+      if (out === null) {
+        return;
+      }
       store.enqueueRelayedFrame(channelId, out);
       const set = peers.get(channelId);
       if (set === undefined) {
