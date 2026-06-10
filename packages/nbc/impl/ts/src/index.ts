@@ -21,13 +21,16 @@ export {
   isActiveBindPolicy,
   isRelayExpiryOk,
   isTurnExpiryOk,
+  localBindPoliciesFromTurnPorts,
   type NbcBindFailure,
   type NbcBindPolicyValidateFn,
   type NbcBindTiming,
   normalizeNbcBindPayload,
+  resolveNbcBindPolicyForPort,
   type ValidateNbcBindInput,
   type ValidateNbcBindResult,
   validateNbcBind,
+  validateOutboundNbcTurnBind,
 } from "./nbc-invariants";
 export { type ResolvePortRefResult, resolveCanonicalPortId } from "./nbc-ref";
 export {

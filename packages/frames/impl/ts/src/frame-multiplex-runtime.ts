@@ -6,6 +6,7 @@ import {
   type NbcTurnBody,
   parseNbcFrameTurnBody,
   serializeNbcTurnBodyForWire,
+  validateOutboundNbcTurnBind,
 } from "@khoralabs/obp-nbc";
 import type { ObpPersistenceClient } from "@khoralabs/obp-persistence";
 import {
@@ -448,6 +449,11 @@ export class MultiplexSessionRuntime {
       if (chain === undefined || !chain.active) {
         throw new ObpError("VALIDATION", "emitOutboundTurn: unknown or inactive chain");
       }
+      await validateOutboundNbcTurnBind({
+        body,
+        client: this.client,
+        validateBindPayload: this.validateBindPayload,
+      });
       const st = this.e2eeByChain.get(chain);
       let wire = serializeNbcTurnBodyForWire(body);
       if (this.frameChannelBodyE2ee) {

@@ -5,6 +5,7 @@
 
 import { ObpError } from "@khoralabs/obp-errors";
 import type { JsonDocument, Offer, Port } from "@khoralabs/obp-model";
+import type { ObpPersistenceClient } from "@khoralabs/obp-persistence";
 import {
   type BindPortTxnSnapshot,
   countBindsForCanonicalPort,
@@ -12,6 +13,7 @@ import {
   type ObpPortExposePolicy,
 } from "@khoralabs/obp-persistence";
 import { resolveCanonicalPortId } from "./nbc-ref";
+import type { NbcPortSpec, NbcTurnBody } from "./nbc-types";
 
 export type NbcBindFailure =
   | { code: "EXPIRED"; entity: "offer" | "port" }
@@ -171,6 +173,60 @@ export function checkNbcBindAdmission(input: CheckNbcBindAdmissionInput): NbcBin
   }
 
   return null;
+}
+
+/** Active `bind_policy` objects keyed by port id from ports declared on the same TURN. */
+export function localBindPoliciesFromTurnPorts(
+  ports: readonly NbcPortSpec[],
+): Map<string, JsonDocument> {
+  const localPolicy = new Map<string, JsonDocument>();
+  for (const spec of ports) {
+    if (isActiveBindPolicy(spec.bind_policy)) {
+      localPolicy.set(spec.id, spec.bind_policy);
+    }
+  }
+  return localPolicy;
+}
+
+/** Resolve `bind_policy` for a bind target from the same-turn map or persistence snapshot. */
+export async function resolveNbcBindPolicyForPort(input: {
+  bindPortId: string;
+  localPolicy: ReadonlyMap<string, JsonDocument>;
+  client: ObpPersistenceClient;
+}): Promise<JsonDocument | null> {
+  const fromLocal = input.localPolicy.get(input.bindPortId);
+  if (fromLocal !== undefined) {
+    return fromLocal;
+  }
+  const pr = await input.client.getPortBindPolicy({ portId: input.bindPortId });
+  if (pr.result.kind === "notFound") {
+    throw new ObpError("NOT_FOUND", `bind_policy snapshot missing for port: ${input.bindPortId}`);
+  }
+  return pr.result.bind_policy;
+}
+
+/**
+ * Sender-side N4 check before encrypting an outbound TURN.
+ * Mirrors receive-side {@link normalizeNbcBindPayload}; does not persist or advance the DAG.
+ */
+export async function validateOutboundNbcTurnBind(input: {
+  body: NbcTurnBody;
+  client: ObpPersistenceClient;
+  validateBindPayload?: NbcBindPolicyValidateFn | undefined;
+}): Promise<void> {
+  if (input.body.bind_port_id === "") {
+    return;
+  }
+  const bindPolicy = await resolveNbcBindPolicyForPort({
+    bindPortId: input.body.bind_port_id,
+    localPolicy: localBindPoliciesFromTurnPorts(input.body.ports),
+    client: input.client,
+  });
+  await normalizeNbcBindPayload({
+    bindPolicy,
+    bindPayload: input.body.bind_payload,
+    validateBindPayload: input.validateBindPayload,
+  });
 }
 
 /** N4 bind-payload normalization (runs before store txn; admission runs inside txn). */

@@ -1,8 +1,11 @@
 import { describe, expect, test } from "bun:test";
 import { validateNbcBindPayloadForPort } from "@khoralabs/nbc-bind-policy";
+import { ObpError } from "@khoralabs/obp-errors";
 import type { JsonDocument, Offer, Port } from "@khoralabs/obp-model";
-import { validateNbcBind } from "./nbc-invariants";
+import { createInMemoryObpPersistenceClient } from "@khoralabs/obp-persistence";
+import { validateNbcBind, validateOutboundNbcTurnBind } from "./nbc-invariants";
 import { resolveCanonicalPortId } from "./nbc-ref";
+import { parseNbcTurnBody } from "./nbc-types";
 
 function nbcBindValidate(
   bindPolicy: JsonDocument | null,
@@ -292,5 +295,77 @@ describe("validateNbcBind", () => {
     });
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.failure.code).toBe("POLICY_REJECTED");
+  });
+});
+
+describe("validateOutboundNbcTurnBind", () => {
+  test("no-op when bind_port_id is empty", async () => {
+    const client = createInMemoryObpPersistenceClient();
+    await validateOutboundNbcTurnBind({
+      body: parseNbcTurnBody({
+        offer: { id: "o", type: "t", expires_turn: 0, expires_at_relay_ms: 0 },
+        ports: [],
+        bind_port_id: "",
+        bind_payload: null,
+      }),
+      client,
+      validateBindPayload: nbcBindValidate,
+    });
+  });
+
+  test("rejects invalid bind_payload before send using same-turn bind_policy", async () => {
+    const client = createInMemoryObpPersistenceClient();
+    const body = parseNbcTurnBody({
+      offer: { id: "o", type: "t", expires_turn: 0, expires_at_relay_ms: 0 },
+      ports: [
+        {
+          id: "p1",
+          type: "t",
+          promise: "",
+          expires_turn: 0,
+          expires_at_relay_ms: 0,
+          bind_policy: textBindSchema,
+          ref: "",
+        },
+      ],
+      bind_port_id: "p1",
+      bind_payload: {},
+    });
+    await expect(
+      validateOutboundNbcTurnBind({
+        body,
+        client,
+        validateBindPayload: nbcBindValidate,
+      }),
+    ).rejects.toBeInstanceOf(ObpError);
+  });
+
+  test("accepts valid bind_payload using persistence bind_policy snapshot", async () => {
+    const client = createInMemoryObpPersistenceClient();
+    const { party } = await client.registerParty({ name: "A" });
+    const { offer } = await client.extendOffer({
+      partyId: party.id,
+      offer: { id: "o1", type: "t" },
+      nbc_expires_turn: 0,
+      nbc_expires_at_relay_ms: 0,
+      bindPortId: "",
+      bind_payload: null,
+    });
+    const { port } = await client.exposePort({
+      offerId: offer.id,
+      port: { id: "p1", type: "t", promise: "", ref: "" },
+      bind_policy: textBindSchema,
+    });
+    const body = parseNbcTurnBody({
+      offer: { id: "", type: "t", expires_turn: 0, expires_at_relay_ms: 0 },
+      ports: [],
+      bind_port_id: port.id,
+      bind_payload: { greeting: "hi" },
+    });
+    await validateOutboundNbcTurnBind({
+      body,
+      client,
+      validateBindPayload: nbcBindValidate,
+    });
   });
 });

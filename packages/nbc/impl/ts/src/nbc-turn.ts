@@ -12,6 +12,7 @@ import {
   type NbcBindPolicyValidateFn,
   type NbcBindTiming,
   normalizeNbcBindPayload,
+  resolveNbcBindPolicyForPort,
 } from "./nbc-invariants";
 import { type NbcTurnBody, nbcPortSpecToPort } from "./nbc-types";
 
@@ -94,20 +95,11 @@ export async function applyNbcTurn(params: ApplyNbcTurnParams): Promise<ApplyNbc
   }
 
   if (body.bind_port_id !== "") {
-    const fromLocal = localPolicy.get(body.bind_port_id);
-    let bindPolicy: JsonDocument | null;
-    if (fromLocal !== undefined) {
-      bindPolicy = fromLocal;
-    } else {
-      const pr = await client.getPortBindPolicy({ portId: body.bind_port_id });
-      if (pr.result.kind === "notFound") {
-        throw new ObpError(
-          "NOT_FOUND",
-          `bind_policy snapshot missing for port: ${body.bind_port_id}`,
-        );
-      }
-      bindPolicy = pr.result.bind_policy;
-    }
+    const bindPolicy = await resolveNbcBindPolicyForPort({
+      bindPortId: body.bind_port_id,
+      localPolicy,
+      client,
+    });
 
     const normalizedBindPayload = await normalizeNbcBindPayload({
       bindPolicy,
