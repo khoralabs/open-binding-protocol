@@ -1,9 +1,24 @@
 {
-  "name": "@khoralabs/obp",
+  "name": "@khoralabs",
   "private": true,
   "type": "module",
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "packages/react/examples",
+    "packages/agents/*",
+    "packages/persistence/*",
+    "packages/errors/impl/ts",
+    "packages/frames/impl/ts",
+    "packages/model/impl/ts",
+    "packages/persistence/impl/ts",
+    "packages/persistence/sqlite",
+    "packages/session/impl/ts",
+    "packages/nbc/impl/ts",
+    "packages/transport-http2/impl/ts",
+    "packages/transport-ws/impl/ts",
+    "packages/frame-relay/spec",
+    "packages/frame-relay/impl/ts",
+    "packages/frame-relay/sqlite"
   ],
   "scripts": {
     "check": "biome check .",

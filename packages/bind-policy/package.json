@@ -1,0 +1,30 @@
+{
+  "name": "@khoralabs/nbc-bind-policy",
+  "version": "0.0.0",
+  "description": "NBC bind policies as JSON Schema (draft 2020-12) + AJV validation for bind payloads.",
+  "type": "module",
+  "private": true,
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@khoralabs/obp-errors": "workspace:*",
+    "@khoralabs/obp-model": "workspace:*",
+    "ajv": "^8.17.1"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}
