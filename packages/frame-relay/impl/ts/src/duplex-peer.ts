@@ -13,6 +13,7 @@ export type AttachDuplexFrameRelayPeerResult = {
 export async function attachDuplexAsFrameRelayPeer(
   hub: FrameRelayHubPort,
   channelId: string,
+  ticket: string,
   duplex: DuplexByteStream,
 ): Promise<AttachDuplexFrameRelayPeerResult> {
   const abort = new AbortController();
@@ -31,7 +32,7 @@ export async function attachDuplexAsFrameRelayPeer(
     },
   };
 
-  await hub.attachPeer(channelId, peer);
+  await hub.attachPeer(channelId, peer, ticket);
 
   void (async () => {
     try {

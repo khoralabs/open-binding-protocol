@@ -11,7 +11,8 @@ export interface FrameRelayHubPort {
   /** Sign a ticket with the current pairing secret without rotating (shared multiplex ticket). */
   mintChannelTicket(channelId: string): Promise<{ ticket: string } | undefined>;
   verifyTicket(channelId: string, ticket: string): Promise<boolean>;
-  attachPeer(channelId: string, peer: FrameRelayPeer): Promise<void>;
+  /** Requires a hub-issued admission ticket; rejects invalid or expired tickets. */
+  attachPeer(channelId: string, peer: FrameRelayPeer, ticket: string): Promise<void>;
   detachPeer(channelId: string, peer: FrameRelayPeer): void;
   relayBytes(channelId: string, from: FrameRelayPeer, bytes: Uint8Array): void;
 }

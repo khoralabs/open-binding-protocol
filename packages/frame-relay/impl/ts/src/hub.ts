@@ -24,6 +24,14 @@ export function createFrameRelayHub(options: CreateFrameRelayHubOptions): FrameR
     return set;
   };
 
+  const verifyTicketForChannel = async (channelId: string, ticket: string): Promise<boolean> => {
+    const secret = store.getPairingSecretIfActive(channelId, Date.now());
+    if (secret === undefined) {
+      return false;
+    }
+    return verifyChannelTicket(channelId, ticket, secret);
+  };
+
   return {
     async createChannel(channelId: string, ttlMs = 86_400_000): Promise<{ ticket: string }> {
       const secret = generateChannelSecretHex();
@@ -66,14 +74,14 @@ export function createFrameRelayHub(options: CreateFrameRelayHubOptions): FrameR
     },
 
     async verifyTicket(channelId: string, ticket: string): Promise<boolean> {
-      const secret = store.getPairingSecretIfActive(channelId, Date.now());
-      if (secret === undefined) {
-        return false;
-      }
-      return verifyChannelTicket(channelId, ticket, secret);
+      return verifyTicketForChannel(channelId, ticket);
     },
 
-    async attachPeer(channelId: string, peer: FrameRelayPeer): Promise<void> {
+    async attachPeer(channelId: string, peer: FrameRelayPeer, ticket: string): Promise<void> {
+      const ok = await verifyTicketForChannel(channelId, ticket);
+      if (!ok) {
+        throw new Error(`FrameRelayHub: invalid or expired ticket for channel: ${channelId}`);
+      }
       const set = getPeerSet(channelId);
       set.add(peer);
       const replay = store.listRelayedFramesAfter(channelId, 0);

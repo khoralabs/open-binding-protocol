@@ -13,5 +13,7 @@ export type {
 } from "./store-types";
 export {
   type FrameRelayHubWsData,
+  type FrameRelayHubWsUpgradePort,
   frameRelayHubWebSocketHandlers,
+  upgradeFrameRelayHubWebSocket,
 } from "./transport-bun";

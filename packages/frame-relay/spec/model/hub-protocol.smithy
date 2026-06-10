@@ -19,7 +19,7 @@ Deployments that **do not** use a hub relay **MUST NOT** be required to adopt th
 
 **Relationship to OBP framing:** Length-prefixed canonical JSON and **`init`** envelopes follow **`khora.obp.frame#NegotiationFrameProtocol`**; this policy only defines the JSON object shape between **`init`** messages when a relay is in use.
 
-**Admission tickets:** Join proofs for hub channels are transport-scoped HMAC tickets (see reference TS in `@khoralabs/duplex-byte-stream`); they are **not** part of core OBP framing.
+**Admission tickets (mandatory):** Join proofs for hub channels are transport-scoped HMAC tickets (see reference TS in `@khoralabs/duplex-byte-stream`); they are **not** part of core OBP framing. Deployments **MUST** verify tickets before **`attachPeer`** (reference: `upgradeFrameRelayHubWebSocket` in `@khoralabs/obp-frame-relay`). Ungated attach allows any peer that knows **`channelId`** to replay and inject frames.
 """)
 structure RelayEnvelope {
     frame: Frame
