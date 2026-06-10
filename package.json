@@ -17,15 +17,21 @@
     "format:check": "biome check .",
     "typecheck": "tsc --noEmit && tsc --noEmit -p packages/react/examples/tsconfig.json",
     "test": "bun test",
-    "prepare": "husky"
+    "prepare": "husky",
+    "context": "bun run scripts/context.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.16",
     "@types/bun": "^1.3.14",
     "husky": "^9.1.7",
+    "minimatch": "^10.2.5",
+    "parse-gitignore": "^2.0.0",
     "typescript": "^5"
   },
   "peerDependencies": {
     "typescript": "^5"
+  },
+  "dependencies": {
+    "@types/parse-gitignore": "^1.0.2"
   }
 }
