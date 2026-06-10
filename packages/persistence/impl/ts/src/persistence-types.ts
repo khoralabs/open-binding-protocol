@@ -117,11 +117,26 @@ export type ExposePortOutput = {
 // BindPort
 // ---------------------------------------------------------------------------
 
+/** Fresh graph snapshot for admission checks inside a `bindPort` store transaction (N6). */
+export type BindPortTxnSnapshot = {
+  portsById: ReadonlyMap<string, Port>;
+  binds: readonly { portId: string }[];
+  exposedPortIds: ReadonlySet<string>;
+  offerNbcById: ReadonlyMap<string, ObpNbcBindWindow>;
+  portNbcById: ReadonlyMap<string, ObpNbcBindWindow>;
+  portExposePolicyById: ReadonlyMap<string, ObpPortExposePolicy>;
+};
+
 export type BindPortInput = {
   offerId: string;
   portId: string;
   /** Policy-shaped; NBC validates. `null` when not provided. */
   bind_payload: JsonDocument;
+  /**
+   * When set, runs inside the store transaction immediately before insert.
+   * Use for NBC N1–N3/N2 admission against {@link BindPortTxnSnapshot} so validate + capacity + insert are atomic.
+   */
+  assertAdmissible?: (snapshot: BindPortTxnSnapshot) => void;
 };
 
 /** Empty output shape — success is signalled by resolution (no error thrown). */

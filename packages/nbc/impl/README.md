@@ -4,4 +4,4 @@ TypeScript helpers for **Negotiated Binding Convention** in **bilateral** (two-p
 
 - **`ts/`** — [`@khoralabs/obp-nbc`](ts/package.json). Smithy: [`../spec`](../spec).
 
-**N2/N5/N6:** `validateNbcBind` enforces canonical `max_bindings` tally (N2/N5). Atomic cap enforcement under concurrent `bindPort` / `extendOffer` is N6 in `@khoralabs/obp-persistence` and `@khoralabs/obp-sqlite-persistence` strategies.
+**N2/N5/N6:** `checkNbcBindAdmission` enforces N1–N3 and canonical `max_bindings` (N2/N5). `applyNbcTurn` passes it to `bindPort({ assertAdmissible })` so admission and insert share one store transaction (N6). Direct `bindPort` callers without `assertAdmissible` still get capacity checks in the strategy.

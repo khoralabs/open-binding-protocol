@@ -8,6 +8,7 @@ import type {
   BindListingRow,
   BindPortInput,
   BindPortOutput,
+  BindPortTxnSnapshot,
   ExposedPortEdge,
   ExposePortInput,
   ExposePortOutput,
@@ -189,13 +190,32 @@ export class InMemoryObpPersistenceStrategy implements ObpPersistenceStrategy {
     return { port };
   }
 
-  async bindPort(input: BindPortInput): Promise<BindPortOutput> {
-    assertCanonicalBindCapacity({
-      targetPortId: input.portId,
+  private buildBindPortTxnSnapshot(): BindPortTxnSnapshot {
+    const offerNbcById = new Map(this.offerNbc);
+    const portNbcById = new Map(this.portNbc);
+    const portExposePolicyById = new Map(this.portExposePolicies);
+    const exposedPortIds = new Set(this.exposes.map((e) => e.portId));
+    return {
       portsById: this.ports,
-      maxBindingsByPortId: this.loadMaxBindingsMap(),
       binds: this.binds,
-    });
+      exposedPortIds,
+      offerNbcById,
+      portNbcById,
+      portExposePolicyById,
+    };
+  }
+
+  async bindPort(input: BindPortInput): Promise<BindPortOutput> {
+    if (input.assertAdmissible) {
+      input.assertAdmissible(this.buildBindPortTxnSnapshot());
+    } else {
+      assertCanonicalBindCapacity({
+        targetPortId: input.portId,
+        portsById: this.ports,
+        maxBindingsByPortId: this.loadMaxBindingsMap(),
+        binds: this.binds,
+      });
+    }
     this.binds.push({
       offerId: input.offerId,
       portId: input.portId,

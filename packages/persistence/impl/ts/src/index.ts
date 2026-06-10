@@ -16,6 +16,7 @@ export type {
   BindListingRowList,
   BindPortInput,
   BindPortOutput,
+  BindPortTxnSnapshot,
   ExposedPortEdge,
   ExposedPortEdgeList,
   ExposePortInput,

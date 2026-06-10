@@ -6,13 +6,13 @@ import { ObpError } from "@khoralabs/obp-errors";
 import type { JsonDocument, Offer } from "@khoralabs/obp-model";
 import type { ObpPersistenceClient } from "@khoralabs/obp-persistence";
 import {
+  checkNbcBindAdmission,
   isActiveBindPolicy,
   type NbcBindFailure,
   type NbcBindPolicyValidateFn,
   type NbcBindTiming,
-  validateNbcBind,
+  normalizeNbcBindPayload,
 } from "./nbc-invariants";
-import { resolveCanonicalPortId } from "./nbc-ref";
 import { type NbcTurnBody, nbcPortSpecToPort } from "./nbc-types";
 
 export type ApplyNbcTurnParams = {
@@ -94,29 +94,6 @@ export async function applyNbcTurn(params: ApplyNbcTurnParams): Promise<ApplyNbc
   }
 
   if (body.bind_port_id !== "") {
-    const snapOut = await client.getPortsSnapshot();
-    const portsById = new Map(snapOut.entries.map((e) => [e.portId, e.port]));
-    const { exposed } = await client.isPortExposed(body.bind_port_id);
-    const portRes = await client.getPort({ id: body.bind_port_id });
-    if (portRes.result.kind !== "port") {
-      throw new ObpError("NOT_FOUND", `bind_port_id not found: ${body.bind_port_id}`);
-    }
-    const port = portRes.result.port;
-    const offerRes = await client.getOffer({ id: offerId });
-    if (offerRes.result.kind !== "offer") {
-      throw new ObpError("NOT_FOUND", `offer not found after extend: ${offerId}`);
-    }
-    const offerNow = offerRes.result.offer;
-
-    const offerWinRes = await client.getNbcBindWindowForOffer(offerId);
-    const portWinRes = await client.getNbcBindWindowForPort(body.bind_port_id);
-    if (offerWinRes.result.kind !== "window") {
-      throw new ObpError("NOT_FOUND", `NBC bind window missing for offer: ${offerId}`);
-    }
-    if (portWinRes.result.kind !== "window") {
-      throw new ObpError("NOT_FOUND", `NBC bind window missing for port: ${body.bind_port_id}`);
-    }
-
     const fromLocal = localPolicy.get(body.bind_port_id);
     let bindPolicy: JsonDocument | null;
     if (fromLocal !== undefined) {
@@ -132,48 +109,27 @@ export async function applyNbcTurn(params: ApplyNbcTurnParams): Promise<ApplyNbc
       bindPolicy = pr.result.bind_policy;
     }
 
-    const resolved = resolveCanonicalPortId(portsById, body.bind_port_id);
-    if (!resolved.ok) {
-      throw obpErrorFromBindFailure(
-        resolved.reason === "cycle"
-          ? { code: "REF_CYCLE", path: resolved.path }
-          : { code: "REF_MISSING", missingId: resolved.missingId },
-      );
-    }
-
-    const [{ binds }, exposePolicyRes] = await Promise.all([
-      client.listBinds(),
-      client.getPortExposePolicy({ portId: resolved.canonicalId }),
-    ]);
-    if (exposePolicyRes.result.kind !== "found") {
-      throw new ObpError(
-        "NOT_FOUND",
-        `expose policy missing for canonical port: ${resolved.canonicalId}`,
-      );
-    }
-
-    const bindResult = await validateNbcBind({
-      timing,
-      offer: offerNow,
-      port,
-      offerBindWindow: offerWinRes.result.window,
-      portBindWindow: portWinRes.result.window,
-      portsById,
-      targetPortIsExposed: exposed,
+    const normalizedBindPayload = await normalizeNbcBindPayload({
       bindPolicy,
       bindPayload: body.bind_payload,
       validateBindPayload,
-      existingBinds: binds,
-      max_bindings: exposePolicyRes.result.policy.max_bindings,
     });
-    if (!bindResult.ok) {
-      throw obpErrorFromBindFailure(bindResult.failure);
-    }
 
     await client.bindPort({
       offerId,
       portId: body.bind_port_id,
-      bind_payload: bindResult.normalizedBindPayload,
+      bind_payload: normalizedBindPayload,
+      assertAdmissible: (snapshot) => {
+        const failure = checkNbcBindAdmission({
+          timing,
+          offerId,
+          portId: body.bind_port_id,
+          snapshot,
+        });
+        if (failure !== null) {
+          throw obpErrorFromBindFailure(failure);
+        }
+      },
     });
   }
 

@@ -129,6 +129,54 @@ describe("SqliteObpPersistenceStrategy", () => {
     ).rejects.toThrow(ObpError);
   });
 
+  test("assertAdmissible runs inside bindPort transaction", async () => {
+    const client = makeClient();
+    const { party } = await client.registerParty({ name: "Hank" });
+    const { offer: offerA } = await client.extendOffer({
+      partyId: party.id,
+      offer: { id: "", type: "a" },
+      bindPortId: "",
+      bind_payload: null,
+    });
+    const { offer: offerB } = await client.extendOffer({
+      partyId: party.id,
+      offer: { id: "", type: "b" },
+      bindPortId: "",
+      bind_payload: null,
+    });
+    const { port } = await client.exposePort({
+      offerId: offerA.id,
+      port: { id: "admit-port", type: "slot", promise: "p", ref: "" },
+      max_bindings: 1,
+    });
+    await client.exposePort({
+      offerId: offerB.id,
+      port: { id: "admit-port", type: "slot", promise: "p", ref: "" },
+    });
+    await client.bindPort({
+      offerId: offerA.id,
+      portId: port.id,
+      bind_payload: null,
+      assertAdmissible: (snap) => {
+        if (snap.binds.length >= 1) {
+          throw new ObpError("MAX_BINDINGS", "admission rejected in txn");
+        }
+      },
+    });
+    await expect(
+      client.bindPort({
+        offerId: offerB.id,
+        portId: port.id,
+        bind_payload: null,
+        assertAdmissible: (snap) => {
+          if (snap.binds.length >= 1) {
+            throw new ObpError("MAX_BINDINGS", "admission rejected in txn");
+          }
+        },
+      }),
+    ).rejects.toMatchObject({ code: "MAX_BINDINGS" });
+  });
+
   test("N6 concurrent binds allow at most one success", async () => {
     const client = makeClient();
     const { party } = await client.registerParty({ name: "Gina" });

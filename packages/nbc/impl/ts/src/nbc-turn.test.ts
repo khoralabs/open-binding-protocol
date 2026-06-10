@@ -133,6 +133,61 @@ describe("applyNbcTurn", () => {
     expect(row?.bind_payload).toEqual({ greeting: "yo" });
   });
 
+  test("concurrent binds: only one applyNbcTurn succeeds at max_bindings 1", async () => {
+    const client = createInMemoryObpPersistenceClient();
+    const { party: a } = await client.registerParty({ name: "A" });
+    const { party: b } = await client.registerParty({ name: "B" });
+    const { party: c } = await client.registerParty({ name: "C" });
+
+    const r1 = await applyNbcTurn({
+      partyId: a.id,
+      body: parseNbcTurnBody({
+        offer: { id: "", expires_turn: 100, expires_at_relay_ms: 0, type: "step" },
+        ports: [
+          {
+            id: "race-port",
+            type: "slot",
+            promise: "p",
+            expires_turn: 100,
+            expires_at_relay_ms: 0,
+            bind_policy: null,
+            ref: "",
+            max_bindings: 1,
+          },
+        ],
+        bind_port_id: "",
+        bind_payload: null,
+      }),
+      client,
+      timing: timing0,
+    });
+    const portId = r1.exposedPortIds[0];
+    if (portId === undefined) throw new Error("expected port");
+
+    const turnFor = (partyId: string, type: string) =>
+      applyNbcTurn({
+        partyId,
+        body: parseNbcTurnBody({
+          offer: { id: "", expires_turn: 100, expires_at_relay_ms: 0, type },
+          ports: [],
+          bind_port_id: portId,
+          bind_payload: null,
+        }),
+        client,
+        timing: timing0,
+      });
+
+    const results = await Promise.allSettled([turnFor(b.id, "b"), turnFor(c.id, "c")]);
+    const fulfilled = results.filter((r) => r.status === "fulfilled");
+    const rejected = results.filter((r) => r.status === "rejected");
+    expect(fulfilled.length).toBe(1);
+    expect(rejected.length).toBe(1);
+    if (rejected[0]?.status === "rejected") {
+      expect(rejected[0].reason).toBeInstanceOf(ObpError);
+      expect((rejected[0].reason as ObpError).code).toBe("MAX_BINDINGS");
+    }
+  });
+
   test("rejects second bind when max_bindings is 1", async () => {
     const client = createInMemoryObpPersistenceClient();
     const { party: a } = await client.registerParty({ name: "A" });

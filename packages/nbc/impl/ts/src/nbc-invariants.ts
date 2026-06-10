@@ -1,11 +1,16 @@
 /**
  * Bilateral NBC bind-time checks: N1 (expiry), N2/N5 (`max_bindings` tally), N3 (ref chain), N4 (bind policy).
- * Store-layer atomic enforcement is N6 (`bindPort` / `extendOffer` in persistence strategies).
+ * N6: `bindPort` accepts optional `assertAdmissible(snapshot)` run inside the store transaction before insert; `applyNbcTurn` uses this for atomic admission + bind.
  */
 
 import { ObpError } from "@khoralabs/obp-errors";
 import type { JsonDocument, Offer, Port } from "@khoralabs/obp-model";
-import { countBindsForCanonicalPort, type ObpNbcBindWindow } from "@khoralabs/obp-persistence";
+import {
+  type BindPortTxnSnapshot,
+  countBindsForCanonicalPort,
+  type ObpNbcBindWindow,
+  type ObpPortExposePolicy,
+} from "@khoralabs/obp-persistence";
 import { resolveCanonicalPortId } from "./nbc-ref";
 
 export type NbcBindFailure =
@@ -94,100 +99,151 @@ function assertBindPayloadEmptyWhenInactive(bindPayload: JsonDocument | null): v
   }
 }
 
-/**
- * Pure bind validation for bilateral NBC.
- */
-export async function validateNbcBind(input: ValidateNbcBindInput): Promise<ValidateNbcBindResult> {
-  const {
-    timing,
-    offerBindWindow,
-    portBindWindow,
-    port,
-    portsById,
-    targetPortIsExposed,
-    bindPolicy,
-    bindPayload,
-    validateBindPayload,
-  } = input;
+export type CheckNbcBindAdmissionInput = {
+  timing: NbcBindTiming;
+  offerId: string;
+  portId: string;
+  snapshot: BindPortTxnSnapshot;
+};
+
+/** Sync NBC admission checks (N1, N2/N5, N3, NOT_EXPOSED) against a store snapshot. */
+export function checkNbcBindAdmission(input: CheckNbcBindAdmissionInput): NbcBindFailure | null {
+  const { timing, offerId, portId, snapshot } = input;
   const { turnSeq, relayTsMs } = timing;
+  const { portsById, binds, exposedPortIds, offerNbcById, portNbcById, portExposePolicyById } =
+    snapshot;
+
+  const offerBindWindow = offerNbcById.get(offerId);
+  if (offerBindWindow === undefined) {
+    return { code: "REF_MISSING", missingId: offerId };
+  }
+  const port = portsById.get(portId);
+  if (port === undefined) {
+    return { code: "REF_MISSING", missingId: portId };
+  }
+  const portBindWindow = portNbcById.get(portId);
+  if (portBindWindow === undefined) {
+    return { code: "REF_MISSING", missingId: portId };
+  }
 
   if (!isTurnExpiryOk(offerBindWindow.nbc_expires_turn, turnSeq)) {
-    return { ok: false, failure: { code: "EXPIRED", entity: "offer" } };
+    return { code: "EXPIRED", entity: "offer" };
   }
   if (!isRelayExpiryOk(offerBindWindow.nbc_expires_at_relay_ms, relayTsMs)) {
-    return { ok: false, failure: { code: "EXPIRED", entity: "offer" } };
+    return { code: "EXPIRED", entity: "offer" };
   }
   if (!isTurnExpiryOk(portBindWindow.nbc_expires_turn, turnSeq)) {
-    return { ok: false, failure: { code: "EXPIRED", entity: "port" } };
+    return { code: "EXPIRED", entity: "port" };
   }
   if (!isRelayExpiryOk(portBindWindow.nbc_expires_at_relay_ms, relayTsMs)) {
-    return { ok: false, failure: { code: "EXPIRED", entity: "port" } };
+    return { code: "EXPIRED", entity: "port" };
   }
 
-  if (!targetPortIsExposed) {
-    return { ok: false, failure: { code: "NOT_EXPOSED" } };
+  if (!exposedPortIds.has(portId)) {
+    return { code: "NOT_EXPOSED" };
   }
 
   const resolved = resolveCanonicalPortId(portsById, port.id);
   if (!resolved.ok) {
     if (resolved.reason === "cycle") {
-      return { ok: false, failure: { code: "REF_CYCLE", path: resolved.path } };
+      return { code: "REF_CYCLE", path: resolved.path };
     }
-    return {
-      ok: false,
-      failure: { code: "REF_MISSING", missingId: resolved.missingId },
-    };
+    return { code: "REF_MISSING", missingId: resolved.missingId };
   }
 
   const canonicalId = resolved.canonicalId;
   if (!portsById.has(canonicalId)) {
+    return { code: "REF_MISSING", missingId: canonicalId };
+  }
+
+  const exposePolicy = portExposePolicyById.get(canonicalId);
+  if (exposePolicy === undefined) {
+    return { code: "REF_MISSING", missingId: canonicalId };
+  }
+
+  const bindCount = countBindsForCanonicalPort(binds, portsById, canonicalId);
+  if (bindCount >= exposePolicy.max_bindings) {
     return {
-      ok: false,
-      failure: { code: "REF_MISSING", missingId: canonicalId },
+      code: "MAX_BINDINGS_EXCEEDED",
+      canonicalPortId: canonicalId,
+      max_bindings: exposePolicy.max_bindings,
     };
   }
 
-  const { existingBinds, max_bindings } = input;
-  const bindCount = countBindsForCanonicalPort(existingBinds, portsById, canonicalId);
-  if (bindCount >= max_bindings) {
-    return {
-      ok: false,
-      failure: {
-        code: "MAX_BINDINGS_EXCEEDED",
-        canonicalPortId: canonicalId,
-        max_bindings,
-      },
-    };
-  }
+  return null;
+}
 
+/** N4 bind-payload normalization (runs before store txn; admission runs inside txn). */
+export async function normalizeNbcBindPayload(input: {
+  bindPolicy: JsonDocument | null;
+  bindPayload: JsonDocument | null;
+  validateBindPayload?: NbcBindPolicyValidateFn | undefined;
+}): Promise<JsonDocument> {
+  const { bindPolicy, bindPayload, validateBindPayload } = input;
   if (!isActiveBindPolicy(bindPolicy)) {
-    try {
-      assertBindPayloadEmptyWhenInactive(bindPayload);
-    } catch (e) {
-      if (e instanceof ObpError && e.code === "VALIDATION") {
-        return {
-          ok: false,
-          failure: { code: "POLICY_REJECTED", reason: e.message },
-        };
-      }
+    assertBindPayloadEmptyWhenInactive(bindPayload);
+    return bindPayload;
+  }
+  if (validateBindPayload === undefined) {
+    throw new ObpError(
+      "VALIDATION",
+      "active bind_policy requires validateBindPayload (host bind policy validator not configured)",
+    );
+  }
+  try {
+    return await validateBindPayload(bindPolicy, bindPayload);
+  } catch (e) {
+    if (e instanceof ObpError && e.code === "VALIDATION") {
       throw e;
     }
-    return { ok: true, normalizedBindPayload: bindPayload };
+    throw e;
   }
+}
 
-  if (validateBindPayload === undefined) {
-    return {
-      ok: false,
-      failure: {
-        code: "POLICY_REJECTED",
-        reason:
-          "active bind_policy requires validateBindPayload (host bind policy validator not configured)",
-      },
-    };
+function snapshotFromValidateInput(input: ValidateNbcBindInput): BindPortTxnSnapshot {
+  const portExposePolicyById = new Map<string, ObpPortExposePolicy>();
+  const resolved = resolveCanonicalPortId(input.portsById, input.port.id);
+  if (resolved.ok) {
+    portExposePolicyById.set(resolved.canonicalId, {
+      max_bindings: input.max_bindings,
+      terminal: false,
+      ttl_basis: null,
+      ttl_measure: null,
+      expose_seq: null,
+    });
+  }
+  return {
+    portsById: input.portsById,
+    binds: input.existingBinds,
+    exposedPortIds: new Set(input.targetPortIsExposed ? [input.port.id] : []),
+    offerNbcById: new Map([[input.offer.id, input.offerBindWindow]]),
+    portNbcById: new Map([[input.port.id, input.portBindWindow]]),
+    portExposePolicyById,
+  };
+}
+
+/**
+ * Pure bind validation for bilateral NBC.
+ */
+export async function validateNbcBind(input: ValidateNbcBindInput): Promise<ValidateNbcBindResult> {
+  const { offer, port, bindPolicy, bindPayload, validateBindPayload } = input;
+
+  const admissionFailure = checkNbcBindAdmission({
+    timing: input.timing,
+    offerId: offer.id,
+    portId: port.id,
+    snapshot: snapshotFromValidateInput(input),
+  });
+  if (admissionFailure !== null) {
+    return { ok: false, failure: admissionFailure };
   }
 
   try {
-    const normalizedBindPayload = await validateBindPayload(bindPolicy, bindPayload);
+    const normalizedBindPayload = await normalizeNbcBindPayload({
+      bindPolicy,
+      bindPayload,
+      validateBindPayload,
+    });
     return { ok: true, normalizedBindPayload };
   } catch (e) {
     if (e instanceof ObpError && e.code === "VALIDATION") {

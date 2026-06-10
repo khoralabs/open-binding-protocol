@@ -4,6 +4,7 @@ import type { JsonDocument, Offer, Party, Port } from "@khoralabs/obp-model";
 import type {
   BindPortInput,
   BindPortOutput,
+  BindPortTxnSnapshot,
   ExposePortInput,
   ExposePortOutput,
   ExtendOfferInput,
@@ -370,7 +371,11 @@ export class SqliteObpPersistenceStrategy implements ObpPersistenceStrategy {
         throw new ObpError("NOT_FOUND", `Port not found: ${input.portId}`);
       }
 
-      this.assertBindCapacityInTxn(input.portId);
+      if (input.assertAdmissible) {
+        input.assertAdmissible(this.buildBindPortTxnSnapshot());
+      } else {
+        this.assertBindCapacityInTxn(input.portId);
+      }
 
       const seq = Date.now();
       const bindEdge = crypto.randomUUID();
@@ -506,6 +511,78 @@ export class SqliteObpPersistenceStrategy implements ObpPersistenceStrategy {
       this.updatePortsExpiresNowForOffer.run(0, 1, input.offerId);
     })();
     return {};
+  }
+
+  private buildBindPortTxnSnapshot(): BindPortTxnSnapshot {
+    const portsById = this.loadPortsMap();
+    const binds = this.listBindsInTxn();
+    const exposeRows = this.db
+      .query<{ port_id: string }, []>(`SELECT DISTINCT port_id FROM obp_exposes`)
+      .all();
+    const exposedPortIds = new Set(exposeRows.map((r) => r.port_id));
+
+    const offerRows = this.db
+      .query<{ id: string; nbc_expires_turn: number; nbc_expires_at_relay_ms: number }, []>(
+        `SELECT id, nbc_expires_turn, nbc_expires_at_relay_ms FROM obp_offers`,
+      )
+      .all();
+    const offerNbcById = new Map(
+      offerRows.map((r) => [
+        r.id,
+        {
+          nbc_expires_turn: r.nbc_expires_turn,
+          nbc_expires_at_relay_ms: r.nbc_expires_at_relay_ms,
+        },
+      ]),
+    );
+
+    const portRows = this.db
+      .query<
+        {
+          id: string;
+          nbc_expires_turn: number;
+          nbc_expires_at_relay_ms: number;
+          max_bindings: number;
+          terminal: number;
+          ttl_basis: string | null;
+          ttl_measure: number | null;
+          expose_seq: number | null;
+        },
+        []
+      >(
+        `SELECT id, nbc_expires_turn, nbc_expires_at_relay_ms, max_bindings, terminal, ttl_basis, ttl_measure, expose_seq FROM obp_ports`,
+      )
+      .all();
+    const portNbcById = new Map(
+      portRows.map((r) => [
+        r.id,
+        {
+          nbc_expires_turn: r.nbc_expires_turn,
+          nbc_expires_at_relay_ms: r.nbc_expires_at_relay_ms,
+        },
+      ]),
+    );
+    const portExposePolicyById = new Map(
+      portRows.map((r) => [
+        r.id,
+        {
+          max_bindings: r.max_bindings,
+          terminal: r.terminal === 1,
+          ttl_basis: r.ttl_basis,
+          ttl_measure: r.ttl_measure,
+          expose_seq: r.expose_seq,
+        },
+      ]),
+    );
+
+    return {
+      portsById,
+      binds,
+      exposedPortIds,
+      offerNbcById,
+      portNbcById,
+      portExposePolicyById,
+    };
   }
 
   private assertBindCapacityInTxn(targetPortId: string): void {

@@ -17,12 +17,15 @@ export {
   parseNbcFrameTurnBody,
 } from "./nbc-graph-effect";
 export {
+  type CheckNbcBindAdmissionInput,
+  checkNbcBindAdmission,
   isActiveBindPolicy,
   isRelayExpiryOk,
   isTurnExpiryOk,
   type NbcBindFailure,
   type NbcBindPolicyValidateFn,
   type NbcBindTiming,
+  normalizeNbcBindPayload,
   type ValidateNbcBindInput,
   type ValidateNbcBindResult,
   validateNbcBind,
