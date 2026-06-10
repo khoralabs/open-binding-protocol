@@ -1,4 +1,4 @@
-# OBP v2 — session implementations
+# OBP — session implementations
 
 Language-specific implementations for the session protocol live under this directory.
 

@@ -1,6 +1,6 @@
 /**
  * Merkle / checkpoint helpers per `NegotiationSessionProtocol` in
- * `packages/obp/v2/session/spec/model/session-protocol.smithy`.
+ * `packages/session/spec/model/session-protocol.smithy`.
  */
 
 import { createHash } from "node:crypto";

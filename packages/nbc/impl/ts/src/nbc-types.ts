@@ -1,6 +1,6 @@
 /**
  * TypeScript models for **`khora.obp.nbc`** turn payloads — see
- * `packages/obp/v2/nbc/spec/model/nbc-turn.smithy`.
+ * `packages/nbc/spec/model/nbc-turn.smithy`.
  */
 
 import type { JsonDocument, Port } from "@khoralabs/obp-model";

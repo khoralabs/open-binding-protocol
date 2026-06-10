@@ -4,10 +4,10 @@ namespace khora.obp.nbc
 
 /// **Negotiated Binding Convention (NBC)** — conventions for **using** the Offer Binding Protocol (`khora.obp`) in a **negotiated** context (e.g. peer-to-peer negotiation): when a **bind** is admissible, how **`turn_seq`** and **`relay_ts_ms`** (from **`khora.obp.frame.relay#RelayEnvelope`** when hub relay policy applies) relate to NBC bind windows (**`NbcOfferSpec`**, **`NbcPortSpec`**, and **`ObpPersistence`** **`nbc_expires_*`** projections — **not** fields on thin **`khora.obp#Offer` / `khora.obp#Port`**), canonical **`NbcPortExposePolicy.max_bindings`** tally, **`terminal`** / **`bind_policy`** / TTL context, **`NbcBindSatisfaction`**, **`NbcRowCommitMeta`** (`created_seq`), and concurrency expectations.
 ///
-/// NBC is **not** a second graph protocol. It layers **social and orchestration** rules on top of the structural OBP persistence projection (`khora.obp#ObpPersistence`) and the live negotiation transports in **`khora.obp.frame`** and **`khora.obp.session`** (`packages/obp/v2/frames/spec/model/frame-protocol.smithy`, `packages/obp/v2/session/spec/model/session-protocol.smithy`).
+/// NBC is **not** a second graph protocol. It layers **social and orchestration** rules on top of the structural OBP persistence projection (`khora.obp#ObpPersistence`) and the live negotiation transports in **`khora.obp.frame`** and **`khora.obp.session`** (`packages/frames/spec/model/frame-protocol.smithy`, `packages/session/spec/model/session-protocol.smithy`).
 ///
 /// **Relationship to OBP**
-/// - **OBP** (`khora.obp`, `packages/obp/v2/persistence/spec/model/persistence.smithy`) defines the **typed graph**, **persistence operation surface**, and (with frame/session specs) **signed transcript** rules for mutual agreement on projection. **`khora.obp#Port`** / **`khora.obp#Offer`** are **thin** identity + workflow shapes (**no** NBC bind-window fields); row **`created_seq`** and **`nbc_expires_*`** projections are persistence / NBC concerns (see **`khora.obp.nbc#NbcRowCommitMeta`**, **`GetNbcBindWindowForOffer`**, **`GetNbcBindWindowForPort`**). **Bind capacity, terminal hint, bind-policy JSON, and TTL/expose context** live on **`khora.obp.nbc#NbcPortExposePolicy`** (`packages/obp/v2/nbc/spec/model/nbc-policy.smithy`).
+/// - **OBP** (`khora.obp`, `packages/persistence/spec/model/persistence.smithy`) defines the **typed graph**, **persistence operation surface**, and (with frame/session specs) **signed transcript** rules for mutual agreement on projection. **`khora.obp#Port`** / **`khora.obp#Offer`** are **thin** identity + workflow shapes (**no** NBC bind-window fields); row **`created_seq`** and **`nbc_expires_*`** projections are persistence / NBC concerns (see **`khora.obp.nbc#NbcRowCommitMeta`**, **`GetNbcBindWindowForOffer`**, **`GetNbcBindWindowForPort`**). **Bind capacity, terminal hint, bind-policy JSON, and TTL/expose context** live on **`khora.obp.nbc#NbcPortExposePolicy`** (`packages/nbc/spec/model/nbc-policy.smithy`).
 /// - **NBC** defines additional **MUST** rules for implementations that claim **NBC conformance**. An implementation may be **OBP-conformant** without NBC; it **MUST NOT** claim NBC conformance unless it satisfies all normative rules below.
 ///
 /// **Driver model (informative)**
@@ -31,11 +31,11 @@ namespace khora.obp.nbc
 ///
 /// **N8. Revocation (soft close).** NBC implementations MAY set **`nbc_expires_*`** projection (or wire equivalents on **`NbcOfferSpec` / `NbcPortSpec`**) so subsequent binds fail **N1** (e.g. relay ceiling at or before revocation via **`SetPortExpiredNow` / `SetOfferExpiredNow`**). **`NbcPortExposePolicy.terminal`** is an orchestration hint (e.g. completion workflows); it does not alter OBP graph topology. **ListExposedPortEdges** and related `ObpPersistence` reads support orchestration.
 ///
-/// **N9. Row `created_seq` (commit metadata).** Implementations **MAY** persist a monotonic **`created_seq`** per stored graph row using **`khora.obp.nbc#NbcRowCommitMeta`** semantics. It is **not** part of **`khora.obp`** Smithy shapes (`packages/obp/v2/model/spec/model/shapes.smithy`); it supports NBC / adapter ordering and audit.
+/// **N9. Row `created_seq` (commit metadata).** Implementations **MAY** persist a monotonic **`created_seq`** per stored graph row using **`khora.obp.nbc#NbcRowCommitMeta`** semantics. It is **not** part of **`khora.obp`** Smithy shapes (`packages/model/spec/model/shapes.smithy`); it supports NBC / adapter ordering and audit.
 ///
 /// **Errors (informative):** NBC adds failure modes (expired, max bindings exceeded, bind-policy validation failure) mapped at the NBC layer.
 ///
 /// **Transactions (informative):** **ExtendOffer**, **ExposePort**, and **BindPort** SHOULD run atomically where supported; **N6** remains mandatory under concurrency.
 ///
-/// **Narrative:** `packages/obp/documentation/negotiated-binding-convention.md`.
+/// **Narrative:** `packages/README.md` (NBC section).
 structure NegotiatedBindingConvention {}

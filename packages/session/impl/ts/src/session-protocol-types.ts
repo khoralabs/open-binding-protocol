@@ -1,6 +1,6 @@
 /**
  * TypeScript models for **`khora.obp.session`** — see
- * `packages/obp/v2/session/spec/model/session-protocol.smithy`.
+ * `packages/session/spec/model/session-protocol.smithy`.
  *
  * `SessionInit` / `SessionParty` wire helpers live in **`@khoralabs/obp-frames-impl`** (`khora.obp.frame`).
  */

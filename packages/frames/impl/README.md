@@ -1,4 +1,4 @@
-# OBP v2 — frame implementations
+# OBP — frame implementations
 
 Language-specific implementations for the frame protocol live under this directory.
 

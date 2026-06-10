@@ -69,21 +69,21 @@ type PortRow = {
   bind_policy_json: string | null;
 };
 
-function rowToPartyV2(r: PartyRow): Party {
+function rowToParty(r: PartyRow): Party {
   return {
     id: r.id,
     name: r.name,
   };
 }
 
-function rowToOfferV2(r: OfferRow): Offer {
+function rowToOffer(r: OfferRow): Offer {
   return {
     id: r.id,
     type: r.type,
   };
 }
 
-function rowToPortV2(r: PortRow): Port {
+function rowToPort(r: PortRow): Port {
   return {
     id: r.id,
     type: r.type,
@@ -190,7 +190,7 @@ export class SqliteObpPersistenceStrategy implements ObpPersistenceStrategy {
       const seq = Date.now();
       this.insertParty.run(id, seq, input.name);
       return {
-        party: rowToPartyV2({
+        party: rowToParty({
           id,
           created_seq: seq,
           name: input.name,
@@ -204,7 +204,7 @@ export class SqliteObpPersistenceStrategy implements ObpPersistenceStrategy {
       .query<PartyRow, [string]>(`SELECT id, created_seq, name FROM obp_parties WHERE id = ?`)
       .get(input.id);
     if (!row) return { result: { kind: "notFound" } };
-    return { result: { kind: "party", party: rowToPartyV2(row) } };
+    return { result: { kind: "party", party: rowToParty(row) } };
   }
 
   async getOffer(input: GetOfferInput): Promise<GetOfferOutput> {
@@ -214,7 +214,7 @@ export class SqliteObpPersistenceStrategy implements ObpPersistenceStrategy {
       )
       .get(input.id);
     if (!row) return { result: { kind: "notFound" } };
-    return { result: { kind: "offer", offer: rowToOfferV2(row) } };
+    return { result: { kind: "offer", offer: rowToOffer(row) } };
   }
 
   async getPort(input: GetPortInput): Promise<GetPortOutput> {
@@ -224,7 +224,7 @@ export class SqliteObpPersistenceStrategy implements ObpPersistenceStrategy {
       )
       .get(input.id);
     if (!row) return { result: { kind: "notFound" } };
-    return { result: { kind: "port", port: rowToPortV2(row) } };
+    return { result: { kind: "port", port: rowToPort(row) } };
   }
 
   async getPortBindPolicy(input: GetPortBindPolicyInput): Promise<GetPortBindPolicyOutput> {
@@ -504,12 +504,12 @@ export class SqliteObpPersistenceStrategy implements ObpPersistenceStrategy {
       .all();
     const m = new Map<string, Port>();
     for (const r of rows) {
-      m.set(r.id, rowToPortV2(r));
+      m.set(r.id, rowToPort(r));
     }
     return m;
   }
 }
 
-export function createObpV2SqliteStrategy(db: Database): SqliteObpPersistenceStrategy {
+export function createObpSqliteStrategy(db: Database): SqliteObpPersistenceStrategy {
   return new SqliteObpPersistenceStrategy(db);
 }

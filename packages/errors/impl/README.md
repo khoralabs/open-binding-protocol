@@ -1,5 +1,5 @@
-# OBP v2 — shared errors
+# OBP — shared errors
 
-Shared **`ObpError`** / **`ObpErrorCode`** for v2 OBP TypeScript packages.
+Shared **`ObpError`** / **`ObpErrorCode`** for OBP TypeScript packages.
 
 - **`ts/`** — [`@khoralabs/obp-errors`](ts/package.json).

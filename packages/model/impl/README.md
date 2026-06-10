@@ -1,4 +1,4 @@
-# OBP v2 — model implementations
+# OBP — model implementations
 
 TypeScript types for the `khora.obp` graph vocabulary live under this directory.
 

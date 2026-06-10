@@ -1,12 +1,12 @@
 import { Database } from "bun:sqlite";
 import { describe, expect, test } from "bun:test";
-import { initObpV2Schema } from "./connection";
-import { createObpV2SqlitePersistenceClient } from "./index";
+import { initObpSchema } from "./connection";
+import { createObpSqlitePersistenceClient } from "./index";
 
 function makeClient() {
   const db = new Database(":memory:");
-  initObpV2Schema(db);
-  return createObpV2SqlitePersistenceClient(db);
+  initObpSchema(db);
+  return createObpSqlitePersistenceClient(db);
 }
 
 describe("SqliteObpPersistenceStrategy", () => {

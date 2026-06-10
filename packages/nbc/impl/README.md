@@ -1,4 +1,4 @@
-# OBP v2 — NBC implementations
+# OBP — NBC implementations
 
 TypeScript helpers for **Negotiated Binding Convention** in **bilateral** (two-peer) sessions: `NbcTurnBody` parsing, bind-time checks (N1, N3, N4), `applyNbcTurn`, and read helpers for natural session stop.
 

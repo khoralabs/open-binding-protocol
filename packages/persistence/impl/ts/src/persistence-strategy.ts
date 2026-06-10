@@ -5,7 +5,7 @@
  * call-site code. Implementations may be in-memory, SQLite, Convex, PostgreSQL, etc.
  *
  * Each method mirrors one `ObpPersistence` Smithy operation from
- * `packages/obp/v2/persistence/spec/model/persistence.smithy`.
+ * `packages/persistence/spec/model/persistence.smithy`.
  */
 
 import type {

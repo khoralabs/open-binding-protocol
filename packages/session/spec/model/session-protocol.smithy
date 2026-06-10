@@ -64,7 +64,7 @@ union VerifyError {
 /// Normative documentation and wire shapes for **decentralized negotiation session sync** on top of core OBP.
 ///
 /// **Conceptual dependency:** This namespace describes how two peers agree on an ordered operation log and Merkle checkpoints
-/// while each runs **`khora.obp#ObpPersistence`** locally. **`khora.obp`** **`packages/obp/v2/model/spec/model/shapes.smithy`** / **`packages/obp/v2/persistence/spec/model/persistence.smithy`** MUST NOT
+/// while each runs **`khora.obp#ObpPersistence`** locally. **`khora.obp`** **`packages/model/spec/model/shapes.smithy`** / **`packages/persistence/spec/model/persistence.smithy`** MUST NOT
 /// import **`khora.obp.session`** (no compiler dependency from core OBP to this protocol).
 ///
 /// **Session scope:** A negotiation session has **`session_id`** (opaque string) and exactly **two** participant party ids
@@ -103,7 +103,7 @@ union VerifyError {
 /// **Fork / rollback:** After rejection, implementations SHOULD discard tentative tail state and restore **last mutually agreed**
 /// **`{ seq, root_hex }`**, e.g. via persisted snapshots or replay from an exported **`ObpPersistence`** state.
 ///
-/// **Replay into `ObpPersistence`:** When applying **`delta_ops`** after verification, implementations MUST apply effects in order and MUST enforce the same **`khora.obp#ObpPersistence`** invariants as live frames (see **`packages/obp/v2/persistence/spec/model/persistence.smithy`**, including NBC **global canonical `NbcPortExposePolicy.max_bindings`** and **atomic** bind enforcement when multiple writers target the same store). **`Checkpoint.seq`** orders the **session op log**; it does **not** by itself define cross-store global ordering across unrelated persistence instances. Choosing shared versus partitioned backends for replay matches deployment choice for live frames and is **implementation-defined** subject to **`packages/obp/v2/persistence/spec/model/persistence.smithy`** invariant **11**.
+/// **Replay into `ObpPersistence`:** When applying **`delta_ops`** after verification, implementations MUST apply effects in order and MUST enforce the same **`khora.obp#ObpPersistence`** invariants as live frames (see **`packages/persistence/spec/model/persistence.smithy`**, including NBC **global canonical `NbcPortExposePolicy.max_bindings`** and **atomic** bind enforcement when multiple writers target the same store). **`Checkpoint.seq`** orders the **session op log**; it does **not** by itself define cross-store global ordering across unrelated persistence instances. Choosing shared versus partitioned backends for replay matches deployment choice for live frames and is **implementation-defined** subject to **`packages/persistence/spec/model/persistence.smithy`** invariant **11**.
 ///
 /// **Inclusion proofs:** Optional on the wire: standard Merkle sibling hashes from leaf row to root; verifiers walk **`H_internal`**
 /// with the same odd-count pairing rule used to build the tree.

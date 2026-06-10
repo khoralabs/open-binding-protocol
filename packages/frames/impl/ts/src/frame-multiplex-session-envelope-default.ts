@@ -6,7 +6,7 @@ import {
 
 import type { SessionEnvelopeSyncAdapter } from "./frame-multiplex-session-types";
 
-/** Default adapter: v2 Merkle checkpoints + extends check (see {@link verifySessionOpsExtends}). */
+/** Default adapter: Merkle checkpoints + extends check (see {@link verifySessionOpsExtends}). */
 export function defaultSessionEnvelopeSyncAdapter(): SessionEnvelopeSyncAdapter {
   return {
     checkpointFromOps: (ops) => checkpointWireFromSessionOps(ops),

@@ -1,6 +1,6 @@
 /**
  * TypeScript models for **`khora.obp`** graph vocabulary — see
- * `packages/obp/v2/model/spec/model/shapes.smithy`.
+ * `packages/model/spec/model/shapes.smithy`.
  */
 
 /** Smithy `Document` — JSON-compatible value (`khora.obp` persistence surface). */

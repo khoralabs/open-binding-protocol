@@ -1,6 +1,6 @@
 /**
  * TypeScript models for **`khora.obp.frame`** — see
- * `packages/obp/v2/frames/spec/model/frame-protocol.smithy`.
+ * `packages/frames/spec/model/frame-protocol.smithy`.
  */
 
 /** Smithy `Document`: JSON-compatible value on the wire. */

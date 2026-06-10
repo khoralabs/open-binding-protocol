@@ -27,7 +27,7 @@ structure NbcBindSatisfaction {
     payload: Document
 }
 
-/// First-commit ledger tick for a persisted **`khora.obp`** graph row (**`Party`**, **`Offer`**, **`Port`**, or an edge). **Not** a member of those shapes in `packages/obp/v2/model/spec/model/shapes.smithy`; **`ObpPersistence`** and NBC-aware adapters record **`created_seq`** (or equivalent) when they require monotonic row ordering or audit.
+/// First-commit ledger tick for a persisted **`khora.obp`** graph row (**`Party`**, **`Offer`**, **`Port`**, or an edge). **Not** a member of those shapes in `packages/model/spec/model/shapes.smithy`; **`ObpPersistence`** and NBC-aware adapters record **`created_seq`** (or equivalent) when they require monotonic row ordering or audit.
 structure NbcRowCommitMeta {
     created_seq: Long
 }

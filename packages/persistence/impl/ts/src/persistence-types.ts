@@ -1,6 +1,6 @@
 /**
  * Input / output shapes and result unions for `ObpPersistence` — see
- * `packages/obp/v2/persistence/spec/model/persistence.smithy`.
+ * `packages/persistence/spec/model/persistence.smithy`.
  */
 
 import type { JsonDocument, Offer, Party, Port } from "@khoralabs/obp-model";

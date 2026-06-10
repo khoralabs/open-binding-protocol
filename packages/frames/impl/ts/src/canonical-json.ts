@@ -2,7 +2,7 @@ import type { JsonDocument } from "./frame-protocol-types";
 
 /**
  * UTF-8 bytes of **`canonical_json(v)`** per **`NegotiationFrameProtocol`**
- * (`packages/obp/v2/frames/spec/model/frame-protocol.smithy`).
+ * (`packages/frames/spec/model/frame-protocol.smithy`).
  */
 export function canonicalJsonUtf8(value: JsonDocument | unknown): Uint8Array {
   return new TextEncoder().encode(stableStringify(value));

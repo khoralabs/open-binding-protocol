@@ -1,16 +1,16 @@
 import { Database } from "bun:sqlite";
-import { OBP_V2_SCHEMA_SQL } from "./schema";
+import { OBP_SCHEMA_SQL } from "./schema";
 
 /** Run frozen DDL (safe to call on every open). */
-export function initObpV2Schema(db: Database): void {
+export function initObpSchema(db: Database): void {
   db.run("PRAGMA foreign_keys = ON;");
   db.run("PRAGMA journal_mode = WAL;");
-  db.run(OBP_V2_SCHEMA_SQL);
+  db.run(OBP_SCHEMA_SQL);
 }
 
-/** Open (or create) a SQLite file and initialize OBP v2 tables. */
-export function openObpV2Database(filename: string): Database {
+/** Open (or create) a SQLite file and initialize OBP tables. */
+export function openObpDatabase(filename: string): Database {
   const db = new Database(filename, { create: true });
-  initObpV2Schema(db);
+  initObpSchema(db);
   return db;
 }

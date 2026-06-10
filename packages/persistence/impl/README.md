@@ -1,4 +1,4 @@
-# OBP v2 — persistence implementations
+# OBP — persistence implementations
 
 `ObpPersistenceStrategy` (adapter interface) and `ObpPersistenceClient` (strategy-pattern client) for the `khora.obp` persistence surface.
 

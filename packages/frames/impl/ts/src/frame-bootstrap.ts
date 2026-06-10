@@ -3,7 +3,7 @@
  *
  * **Naming:** Smithy calls this structure **`SessionInit`** inside the **frame** model (`frame-protocol.smithy`).
  * That is **not** the same thing as **`khora.obp.session`** (`SessionEnvelope`, checkpoints, …) in
- * `packages/obp/v2/session/` — different namespace, different job. This file only validates frame-bootstrap
+ * `packages/session/` — different namespace, different job. This file only validates frame-bootstrap
  * wire rules (two parties, pubkey ordering) that the frame spec spells out on **`SessionInit`**.
  *
  * **Why here:** `@khoralabs/obp-frames-impl` owns **`Frame`**, **`SessionInit`**, and framing; helpers belong

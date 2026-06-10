@@ -1,6 +1,6 @@
 /**
  * **`signing_bytes`** and post-frame **tip** hash from `NegotiationFrameProtocol` docs in
- * `packages/obp/v2/frames/spec/model/frame-protocol.smithy`.
+ * `packages/frames/spec/model/frame-protocol.smithy`.
  */
 
 import { createHash } from "node:crypto";

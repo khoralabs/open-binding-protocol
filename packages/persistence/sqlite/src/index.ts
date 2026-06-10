@@ -1,11 +1,11 @@
 import type { Database } from "bun:sqlite";
 import { ObpPersistenceClient } from "@khoralabs/obp-persistence";
-import { createObpV2SqliteStrategy, SqliteObpPersistenceStrategy } from "./strategy";
+import { createObpSqliteStrategy, SqliteObpPersistenceStrategy } from "./strategy";
 
-export { initObpV2Schema, openObpV2Database } from "./connection";
-export { OBP_V2_SCHEMA_SQL } from "./schema";
-export { createObpV2SqliteStrategy, SqliteObpPersistenceStrategy };
+export { initObpSchema, openObpDatabase } from "./connection";
+export { OBP_SCHEMA_SQL } from "./schema";
+export { createObpSqliteStrategy, SqliteObpPersistenceStrategy };
 
-export function createObpV2SqlitePersistenceClient(db: Database): ObpPersistenceClient {
-  return new ObpPersistenceClient(createObpV2SqliteStrategy(db));
+export function createObpSqlitePersistenceClient(db: Database): ObpPersistenceClient {
+  return new ObpPersistenceClient(createObpSqliteStrategy(db));
 }

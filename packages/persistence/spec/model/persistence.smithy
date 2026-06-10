@@ -9,10 +9,10 @@ use smithy.api#Unit
 **Offer Binding Protocol — persistence surface (storage-agnostic RPC shapes).**
 
 **Protocol overview**
-OBP is a small typed graph for causal interaction history: **Party** → **Offer** → **Port**, with edges **EXTENDS** (issuer), **EXPOSES** (makes an affordance available), and **BINDS** (consumes an affordance). See `khora.obp` shapes in `packages/obp/v2/model/spec/model/shapes.smithy`.
+OBP is a small typed graph for causal interaction history: **Party** → **Offer** → **Port**, with edges **EXTENDS** (issuer), **EXPOSES** (makes an affordance available), and **BINDS** (consumes an affordance). See `khora.obp` shapes in `packages/model/spec/model/shapes.smithy`.
 
 **Layering: OBP vs Negotiated Binding Convention (NBC)**
-Some rules that reference implementations historically treated as “OBP persistence” are **not** universal OBP; they belong to the **Negotiated Binding Convention** (`khora.obp.nbc`, `packages/obp/v2/nbc/spec/model/negotiated-binding-convention.smithy`, `packages/obp/documentation/negotiated-binding-convention.md`). **OBP-conformant** persistence MAY omit NBC bind-admissibility enforcement. **NBC-conformant** deployments MUST satisfy NBC in addition to OBP graph rules.
+Some rules that reference implementations historically treated as “OBP persistence” are **not** universal OBP; they belong to the **Negotiated Binding Convention** (`khora.obp.nbc`, `packages/nbc/spec/model/negotiated-binding-convention.smithy`). **OBP-conformant** persistence MAY omit NBC bind-admissibility enforcement. **NBC-conformant** deployments MUST satisfy NBC in addition to OBP graph rules.
 
 **OBP normative invariants (graph / projection)** — implementations MUST enforce for any `ObpPersistence` that faithfully projects the negotiation graph (not expressible in Smithy types alone):
 1. Each **Offer** has exactly one **EXTENDS** from its issuing **Party** (created via **ExtendOffer**).
@@ -22,7 +22,7 @@ Some rules that reference implementations historically treated as “OBP persist
 
 **NBC (separate spec)** — bind admissibility, ledger/expiry at bind, canonical **`NbcPortExposePolicy.max_bindings`** tally, **`NbcPortExposePolicy.terminal`**, **`NbcPortExposePolicy`** bind/TTL fields, **`NbcBindSatisfaction`**, concurrent cap atomicity, and related orchestration: see **`khora.obp.nbc#NegotiatedBindingConvention`**, **`khora.obp.nbc#NbcPortExposePolicy`**, and narrative doc above. OBP’s prior numbered items **3–4, 7, 9–11** (ledger/expiry, `max_bindings` tally, bind policy MUST, multi-EXPOSES cap behavior, concurrent atomicity, store-boundary cap rules) are **NBC** normative rules **N1–N7** there.
 
-**Policy payloads:** **`bind_payload`** on **BindPort** / **ExtendOffer** inputs and **ListBinds** rows is **`Document`** on the **persistence** surface (storage projection), not part of the core graph shape; NBC defines **`NbcBindSatisfaction`** and **when** bind-policy validation runs (`packages/obp/v2/nbc/spec/model/nbc-policy.smithy`); concrete **`bind_policy`** JSON shapes are **product/host-defined**. **`max_bindings`**, **`terminal`**, bind-policy JSON, and TTL/expose context for ports live under **`khora.obp.nbc#NbcPortExposePolicy`**.
+**Policy payloads:** **`bind_payload`** on **BindPort** / **ExtendOffer** inputs and **ListBinds** rows is **`Document`** on the **persistence** surface (storage projection), not part of the core graph shape; NBC defines **`NbcBindSatisfaction`** and **when** bind-policy validation runs (`packages/nbc/spec/model/nbc-policy.smithy`); concrete **`bind_policy`** JSON shapes are **product/host-defined**. **`max_bindings`**, **`terminal`**, bind-policy JSON, and TTL/expose context for ports live under **`khora.obp.nbc#NbcPortExposePolicy`**.
 
 **Staging:** ports that must not be bindable yet are **not** EXPOSES'd (no separate lifecycle enum on **Port**).
 
@@ -34,11 +34,11 @@ Some rules that reference implementations historically treated as “OBP persist
 
 **Smithy ↔ TS unions:** **GetPartyResult** / **GetOfferResult** / **GetPortResult** (`notFound` vs payload) correspond to TS `{ kind: "notFound" } | { kind: "found"; … }` (parity matrix in `@khoralabs/obp-core` README).
 
-Narrative: `packages/obp/README.md`, `packages/obp/documentation/*.md`, `packages/obp/documentation/*.obp`.
+Narrative: `packages/README.md`.
 
-**Decentralized session sync:** Normative protocol (checkpoints, Merkle tree, hashing, verification, fork semantics) is **`khora.obp.session#NegotiationSessionProtocol`** in `packages/obp/v2/session/spec/model/session-protocol.smithy`. Non-normative reader guide: `packages/obp/documentation/decentralized-session.md`.
+**Decentralized session sync:** Normative protocol (checkpoints, Merkle tree, hashing, verification, fork semantics) is **`khora.obp.session#NegotiationSessionProtocol`** in `packages/session/spec/model/session-protocol.smithy`.
 
-**Live negotiation frames:** Bilateral signed **Frame** DAG rules (transport-agnostic) are **`khora.obp.frame#NegotiationFrameProtocol`** in `packages/obp/v2/frames/spec/model/frame-protocol.smithy`. The HTTP/2 reference binding is **`khora.obp.frame.http2#Http2Binding`** in `packages/obp/v2/transport-http2/spec/model/frame-binding-http2.smithy`.
+**Live negotiation frames:** Bilateral signed **Frame** DAG rules (transport-agnostic) are **`khora.obp.frame#NegotiationFrameProtocol`** in `packages/frames/spec/model/frame-protocol.smithy`. The HTTP/2 reference binding is **`khora.obp.frame.http2#Http2Binding`** in `packages/transport-http2/spec/model/frame-binding-http2.smithy`.
 """)
 service ObpPersistence {
     version: "2026-05-01"
