@@ -37,6 +37,18 @@ function channelIdPayloadBytes(channelId: string): Uint8Array {
   return new TextEncoder().encode(channelId);
 }
 
+/** Compare UTF-8 payloads without early exit (length + bytes). */
+function constantTimeEqualBytes(a: Uint8Array, b: Uint8Array): boolean {
+  const maxLen = Math.max(a.length, b.length);
+  let diff = a.length ^ b.length;
+  for (let i = 0; i < maxLen; i++) {
+    const av = a.at(i) ?? 0;
+    const bv = b.at(i) ?? 0;
+    diff |= av ^ bv;
+  }
+  return diff === 0;
+}
+
 /**
  * HMAC-SHA256(utf8(channelId)). Relay-scoped join proof; no OBP types.
  * Wire: base64url(payload).base64url(sig)
@@ -71,10 +83,7 @@ export async function verifyChannelTicket(
     return false;
   }
   const expected = channelIdPayloadBytes(channelId);
-  if (payloadBytes.length !== expected.length) return false;
-  for (let i = 0; i < expected.length; i++) {
-    if (payloadBytes[i] !== expected[i]) return false;
-  }
+  if (!constantTimeEqualBytes(payloadBytes, expected)) return false;
   const key = await importHmacKey(secretHex);
   return crypto.subtle.verify(
     "HMAC",
