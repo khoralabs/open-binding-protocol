@@ -1,6 +1,10 @@
+import { ObpError } from "@khoralabs/obp-errors";
 import { canonicalJsonString } from "./canonical-json";
 import { encodeFramedJson } from "./encode-framed-json";
 import type { Frame, SessionEnvelopeWire } from "./frame-protocol-types";
+import { MAX_FRAME_BYTES } from "./length-prefix";
+
+const MAX_DECODER_BUFFER_BYTES = MAX_FRAME_BYTES + 4;
 
 export type FrameDecoderYield =
   | { kind: "init"; value: unknown }
@@ -12,27 +16,68 @@ export function createFrameDecoder(): {
   push(chunk: Uint8Array): FrameDecoderYield[];
   reset(): void;
 } {
-  let buf: Uint8Array = new Uint8Array(0);
+  let buf = new Uint8Array(256);
+  let used = 0;
 
-  const concat = (a: Uint8Array, b: Uint8Array): Uint8Array => {
-    const out = new Uint8Array(a.length + b.length);
-    out.set(a);
-    out.set(b, a.length);
-    return out;
+  const resetBuffer = (): void => {
+    buf = new Uint8Array(256);
+    used = 0;
   };
 
-  const copyUint8 = (u: Uint8Array): Uint8Array => {
-    const out = new Uint8Array(u.byteLength);
-    out.set(u);
-    return out;
+  const fail = (message: string): never => {
+    resetBuffer();
+    throw new ObpError("VALIDATION", message);
+  };
+
+  const declaredPayloadLen = (): number => {
+    return new DataView(buf.buffer, buf.byteOffset, buf.byteLength).getUint32(0, false);
+  };
+
+  const rejectOversizePrefix = (len: number): void => {
+    if (len > MAX_FRAME_BYTES) {
+      fail("frame length prefix exceeds MAX_FRAME_BYTES");
+    }
+  };
+
+  const append = (chunk: Uint8Array): void => {
+    if (chunk.length > MAX_DECODER_BUFFER_BYTES) {
+      fail("frame chunk exceeds max decoder buffer");
+    }
+    const needed = used + chunk.length;
+    if (needed > MAX_DECODER_BUFFER_BYTES) {
+      fail("decoder buffer exceeds max frame size");
+    }
+    if (used >= 4) {
+      rejectOversizePrefix(declaredPayloadLen());
+    }
+    if (needed > buf.length) {
+      const nextCap = Math.min(MAX_DECODER_BUFFER_BYTES, Math.max(buf.length * 2, needed));
+      const next = new Uint8Array(nextCap);
+      next.set(buf.subarray(0, used));
+      buf = next;
+    }
+    buf.set(chunk, used);
+    used += chunk.length;
+    if (used >= 4) {
+      rejectOversizePrefix(declaredPayloadLen());
+    }
   };
 
   const tryParseOne = (): FrameDecoderYield | null => {
-    if (buf.length < 4) return null;
-    const len = new DataView(buf.buffer, buf.byteOffset, buf.byteLength).getUint32(0, false);
-    if (buf.length < 4 + len) return null;
+    if (used < 4) return null;
+    const len = declaredPayloadLen();
+    rejectOversizePrefix(len);
+    if (used < 4 + len) return null;
     const jsonBytes = buf.subarray(4, 4 + len);
-    buf = buf.length > 4 + len ? new Uint8Array(buf.subarray(4 + len)) : new Uint8Array(0);
+    const remain = used - (4 + len);
+    if (remain > 0) {
+      const next = new Uint8Array(Math.max(256, remain));
+      next.set(buf.subarray(4 + len, used));
+      buf = next;
+      used = remain;
+    } else {
+      resetBuffer();
+    }
     const text = new TextDecoder().decode(jsonBytes);
     const value = JSON.parse(text) as unknown;
     if (isRecord(value) && "init" in value) {
@@ -65,8 +110,7 @@ export function createFrameDecoder(): {
 
   return {
     push(chunk: Uint8Array): FrameDecoderYield[] {
-      const c = copyUint8(chunk);
-      buf = buf.length === 0 ? c : concat(buf, c);
+      append(chunk);
       const out: FrameDecoderYield[] = [];
       for (;;) {
         const one = tryParseOne();
@@ -76,7 +120,7 @@ export function createFrameDecoder(): {
       return out;
     },
     reset(): void {
-      buf = new Uint8Array(0);
+      resetBuffer();
     },
   };
 }

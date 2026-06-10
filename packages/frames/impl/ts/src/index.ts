@@ -97,4 +97,4 @@ export {
   signingBytesUtf8,
   tipSha256HexFromCompleteFrame,
 } from "./frame-signing";
-export { encodeLengthPrefixed } from "./length-prefix";
+export { encodeLengthPrefixed, MAX_FRAME_BYTES } from "./length-prefix";

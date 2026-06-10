@@ -1,3 +1,6 @@
+/** Maximum JSON payload bytes per length-prefixed negotiation frame (4 MiB). */
+export const MAX_FRAME_BYTES = 4 * 1024 * 1024;
+
 /**
  * Length-prefixed wire bytes: **`uint32_be(length)`** (big-endian), then **`length`** bytes of payload
  * (`NegotiationFrameProtocol` default framing).
