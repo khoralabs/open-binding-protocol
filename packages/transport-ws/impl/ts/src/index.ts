@@ -1,4 +1,4 @@
-export { createWebSocketDuplexByteStream } from "./ws-channel";
+export { createWebSocketDuplexByteStream } from "@khoralabs/duplex-byte-stream";
 export {
   connectObpFrameChannelSession,
   connectObpWebSocketSession,

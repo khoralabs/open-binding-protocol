@@ -1,3 +1,9 @@
+import {
+  FRAME_SIGNING_CANONICAL_JSON,
+  canonicalJsonString as sharedCanonicalJsonString,
+  canonicalJsonUtf8 as sharedCanonicalJsonUtf8,
+} from "@khoralabs/canonical-json";
+
 import type { JsonDocument } from "./frame-protocol-types";
 
 /**
@@ -5,24 +11,9 @@ import type { JsonDocument } from "./frame-protocol-types";
  * (`packages/frames/spec/model/frame-protocol.smithy`).
  */
 export function canonicalJsonUtf8(value: JsonDocument | unknown): Uint8Array {
-  return new TextEncoder().encode(stableStringify(value));
+  return sharedCanonicalJsonUtf8(value, FRAME_SIGNING_CANONICAL_JSON);
 }
 
 export function canonicalJsonString(value: JsonDocument | unknown): string {
-  return stableStringify(value);
-}
-
-function stableStringify(v: unknown): string {
-  if (v === undefined) {
-    return "null";
-  }
-  if (v === null || typeof v !== "object") {
-    return JSON.stringify(v);
-  }
-  if (Array.isArray(v)) {
-    return `[${v.map(stableStringify).join(",")}]`;
-  }
-  const o = v as Record<string, unknown>;
-  const keys = Object.keys(o).sort();
-  return `{${keys.map((k) => `${JSON.stringify(k)}:${stableStringify(o[k])}`).join(",")}}`;
+  return sharedCanonicalJsonString(value, FRAME_SIGNING_CANONICAL_JSON);
 }

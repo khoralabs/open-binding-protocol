@@ -24,7 +24,7 @@
     "@khoralabs/obp-frames-impl": "workspace:*"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "^1.3.14"
   },
   "peerDependencies": {
     "typescript": "^5"

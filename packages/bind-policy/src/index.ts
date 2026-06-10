@@ -1,6 +1,9 @@
+export {
+  SCHEMA_CACHE_CANONICAL_JSON,
+  stableStringify,
+} from "@khoralabs/canonical-json";
 export type { BindPolicyJsonSchema } from "./bind-policy-json-schema";
 export { formatAjvErrorsForAgent } from "./format-ajv-errors";
-export { stableStringify } from "./stable-stringify";
 export {
   policyIsActive,
   validateBindPolicyAtExpose,

@@ -1,6 +1,7 @@
 {
-  "name": "@khoralabs/obp-transport-ws",
+  "name": "@khoralabs/canonical-json",
   "version": "0.0.0",
+  "description": "Deterministic canonical JSON (sorted object keys) with explicit undefined handling.",
   "type": "module",
   "private": true,
   "exports": {
@@ -14,15 +15,9 @@
     "test": "bun test",
     "typecheck": "tsc --noEmit"
   },
-  "dependencies": {
-    "@khoralabs/duplex-byte-stream": "workspace:*",
-    "@khoralabs/obp-errors": "workspace:*",
-    "@khoralabs/obp-frames-impl": "workspace:*",
-    "@khoralabs/obp-persistence": "workspace:*",
-    "@khoralabs/obp-session-impl": "workspace:*"
-  },
   "devDependencies": {
-    "@types/bun": "^1.3.14"
+    "@types/bun": "^1.3.14",
+    "typescript": "^5"
   },
   "peerDependencies": {
     "typescript": "^5"

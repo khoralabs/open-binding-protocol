@@ -52,13 +52,13 @@ bun install
 ## Development
 
 ```bash
-bun run format          # format (Biome)
-bun run format:check    # lint/format check
+bun run check:write     # format (Biome)
+bun run check           # lint/format check
 bun run typecheck       # tsc across all packages
 bun test                # all tests
 ```
 
-Husky wires `format:check` on pre-commit and `format:check + typecheck + test` on pre-push.
+Husky wires `check` on pre-commit and `check + typecheck + test` on pre-push.
 
 ## Smithy specs
 

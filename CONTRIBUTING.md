@@ -4,7 +4,7 @@ Thanks for helping improve `@khoralabs/obp`. This repo is a Bun workspace with p
 
 ## Prerequisites
 
-- [Bun](https://bun.sh) (see `package.json` engines / CI)
+- [Bun](https://bun.sh) 1.3+
 - For Smithy model changes: [Smithy CLI](https://smithy.io/2.0/guides/smithy-cli/cli_installation.html) (`smithy validate model` in each `packages/*/spec` directory)
 
 ## Setup
@@ -13,14 +13,14 @@ Thanks for helping improve `@khoralabs/obp`. This repo is a Bun workspace with p
 bun install
 ```
 
-Husky installs via `prepare`. **pre-commit** runs `format:check`; **pre-push** runs `format:check`, `typecheck`, and `test`.
+Husky installs via `prepare`. **pre-commit** runs `check`; **pre-push** runs `check`, `typecheck`, and `test`.
 
 ## Before you open a PR
 
 From the repo root:
 
 ```bash
-bun run format:check
+bun run check
 bun run typecheck
 bun run test
 ```

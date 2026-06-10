@@ -15,6 +15,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@khoralabs/canonical-json": "workspace:*",
     "@khoralabs/duplex-byte-stream": "workspace:*",
     "@khoralabs/obp-errors": "workspace:*",
     "@khoralabs/obp-nbc": "workspace:*",
@@ -23,7 +24,7 @@
     "@noble/curves": "^2.2.0"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "^1.3.14"
   },
   "peerDependencies": {
     "typescript": "^5"

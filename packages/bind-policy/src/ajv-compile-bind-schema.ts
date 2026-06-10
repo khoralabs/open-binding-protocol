@@ -1,8 +1,7 @@
+import { SCHEMA_CACHE_CANONICAL_JSON, stableStringify } from "@khoralabs/canonical-json";
 import { ObpError } from "@khoralabs/obp-errors";
 import type { ValidateFunction } from "ajv";
 import Ajv2020 from "ajv/dist/2020.js";
-
-import { stableStringify } from "./stable-stringify";
 
 const ajv = new Ajv2020({ allErrors: true, strict: true });
 const compileCache = new Map<string, ValidateFunction>();
@@ -33,7 +32,7 @@ export function guardBindPayloadRootSchema(schema: Record<string, unknown>): voi
 /** Compile (cached) validator for **`bind_payload`** given the root JSON Schema. */
 export function getBindPayloadValidator(schema: Record<string, unknown>): ValidateFunction {
   guardBindPayloadRootSchema(schema);
-  const key = stableStringify(schema);
+  const key = stableStringify(schema, SCHEMA_CACHE_CANONICAL_JSON);
   const hit = compileCache.get(key);
   if (hit !== undefined) {
     return hit;
