@@ -8,24 +8,27 @@ import {
   serializeNbcTurnBodyForWire,
 } from "@khoralabs/obp-nbc";
 import type { ObpPersistenceClient } from "@khoralabs/obp-persistence";
+import {
+  bytesToHexLower,
+  hexToBytes32,
+  sha256HexLowerFromUtf8String,
+} from "@khoralabs/obp-primitives";
 import { accumulateTaggedSessionOps, type SessionOp } from "@khoralabs/obp-session-impl";
 
 import { canonicalJsonString } from "./canonical-json";
 import { encodeFramedJson } from "./encode-framed-json";
 import {
-  bytesToHexLower,
   decryptWireFrameBody,
   deriveFrameBodyAesKey,
   encryptLogicalFrameBody,
   ephemeralX25519Keygen,
   handshakeBodyFromEphemeralPub,
-  hexToBytes32,
   isE2eeHandshakeBody,
   minActorPubkeyFromInit,
   parseHandshakeEphemeralPub,
   x25519SharedSecret,
 } from "./frame-channel-e2ee";
-import { FrameDag, sha256HexLowerFromUtf8String, signingPayloadBytes } from "./frame-dag";
+import { FrameDag, signingPayloadBytes } from "./frame-dag";
 import {
   createFrameDecoder,
   encodeSessionEnvelopeMessage,

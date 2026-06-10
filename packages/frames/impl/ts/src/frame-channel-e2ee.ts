@@ -4,6 +4,7 @@
  */
 
 import { ObpError } from "@khoralabs/obp-errors";
+import { bytesToHexLower, hexToBytes32 } from "@khoralabs/obp-primitives";
 import { x25519 } from "@noble/curves/ed25519.js";
 
 import { canonicalJsonString } from "./canonical-json";
@@ -37,24 +38,6 @@ export function ephemeralX25519Keygen(): { sk: Uint8Array; pk: Uint8Array } {
 
 export function x25519SharedSecret(localSk: Uint8Array, remotePk: Uint8Array): Uint8Array {
   return x25519.getSharedSecret(localSk, remotePk);
-}
-
-export function bytesToHexLower(b: Uint8Array): string {
-  return [...b].map((x) => x.toString(16).padStart(2, "0")).join("");
-}
-
-const HEX = /^[0-9a-f]+$/;
-
-export function hexToBytes32(hex: string, field: string): Uint8Array {
-  const h = hex.trim().toLowerCase();
-  if (h.length !== 64 || !HEX.test(h)) {
-    throw new ObpError("VALIDATION", `${field}: expected 64-char hex (32 bytes)`);
-  }
-  const out = new Uint8Array(32);
-  for (let i = 0; i < 32; i++) {
-    out[i] = Number.parseInt(h.slice(i * 2, i * 2 + 2), 16);
-  }
-  return out;
 }
 
 /** First handshake `END_OFFERS` must be from this actor (lex-min Ed25519 pubkey hex). */

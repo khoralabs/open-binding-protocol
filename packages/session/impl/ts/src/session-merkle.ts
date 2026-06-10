@@ -3,22 +3,14 @@
  * `packages/session/spec/model/session-protocol.smithy`.
  */
 
-import { createHash } from "node:crypto";
 import { canonicalJsonString } from "@khoralabs/obp-frames-impl";
-import {
-  type Checkpoint,
-  type SessionOp,
-  type Sha256HexLower,
-  toSha256HexLower,
-} from "./session-protocol-types";
+import type { Sha256HexLower } from "@khoralabs/obp-primitives";
+import { sha256Bytes, sha256HexLowerFromBytes } from "@khoralabs/obp-primitives";
+import type { Checkpoint, SessionOp } from "./session-protocol-types";
 
 const LEAF_TAG = new TextEncoder().encode("OBP_SESSION_LEAF_v1");
 const NUL = new Uint8Array([0]);
 const EMPTY_LOG_LITERAL = new TextEncoder().encode("__empty_session_op_log__");
-
-function sha256(data: Uint8Array): Uint8Array {
-  return new Uint8Array(createHash("sha256").update(data).digest());
-}
 
 function concat(...parts: Uint8Array[]): Uint8Array {
   const len = parts.reduce((a, p) => a + p.length, 0);
@@ -31,33 +23,21 @@ function concat(...parts: Uint8Array[]): Uint8Array {
   return out;
 }
 
-function bytesToHexLower(digest: Uint8Array): Sha256HexLower {
-  let s = "";
-  for (let i = 0; i < digest.length; i++) {
-    const b = digest[i];
-    if (b === undefined) {
-      throw new Error("unexpected end of digest");
-    }
-    s += b.toString(16).padStart(2, "0");
-  }
-  return toSha256HexLower(s);
-}
-
 /** Leaf hash `L_i = SHA-256(LEAF_PREFIX)` with `LEAF_PREFIX = OBP_SESSION_LEAF_v1 || NUL || UTF-8(canonical_json(op))`. */
 export function sessionOpLeafDigest(op: SessionOp): Uint8Array {
   const jsonUtf8 = new TextEncoder().encode(canonicalJsonString(op));
-  return sha256(concat(LEAF_TAG, NUL, jsonUtf8));
+  return sha256Bytes(concat(LEAF_TAG, NUL, jsonUtf8));
 }
 
 /** Root for `n = 0` ops: same prefix construction with literal `__empty_session_op_log__` (not `canonical_json`). */
 export function emptySessionOpLogRootHex(): Sha256HexLower {
-  return bytesToHexLower(sha256(concat(LEAF_TAG, NUL, EMPTY_LOG_LITERAL)));
+  return sha256HexLowerFromBytes(concat(LEAF_TAG, NUL, EMPTY_LOG_LITERAL));
 }
 
 /** Internal node: `SHA-256(0x01 || left || right)` (32-byte children). */
 export function merkleInternalDigest(left: Uint8Array, right: Uint8Array): Uint8Array {
   const prefix = new Uint8Array([0x01]);
-  return sha256(concat(prefix, left, right));
+  return sha256Bytes(concat(prefix, left, right));
 }
 
 /**
@@ -85,7 +65,7 @@ export function merkleRootHexFromLeafDigests(leafDigests: readonly Uint8Array[])
   if (root === undefined) {
     throw new Error("merkle root invariant");
   }
-  return bytesToHexLower(root);
+  return sha256HexLowerFromBytes(root);
 }
 
 /** `Checkpoint` for the given ordered ops (`seq === n`, root over `op_0 … op_{n-1}`). */

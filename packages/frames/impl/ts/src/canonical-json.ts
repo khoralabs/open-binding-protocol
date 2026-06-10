@@ -4,7 +4,7 @@ import {
   canonicalJsonUtf8 as sharedCanonicalJsonUtf8,
 } from "@khoralabs/canonical-json";
 
-import type { JsonDocument } from "./frame-protocol-types";
+import type { JsonDocument } from "@khoralabs/obp-model";
 
 /**
  * UTF-8 bytes of **`canonical_json(v)`** per **`NegotiationFrameProtocol`**

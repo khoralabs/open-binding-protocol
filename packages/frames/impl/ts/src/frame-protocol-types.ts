@@ -3,30 +3,8 @@
  * `packages/frames/spec/model/frame-protocol.smithy`.
  */
 
-/** Smithy `Document`: JSON-compatible value on the wire. */
-export type JsonDocument =
-  | null
-  | boolean
-  | number
-  | string
-  | readonly JsonDocument[]
-  | { readonly [key: string]: JsonDocument };
-
-/** `Sha256HexLower` — lowercase hex, 32-byte digest, length **64**, no `0x`. */
-export type Sha256HexLower = string & { readonly __brand?: "Sha256HexLower" };
-
-const SHA256_HEX = /^[0-9a-f]{64}$/;
-
-export function isSha256HexLower(s: string): s is Sha256HexLower {
-  return SHA256_HEX.test(s);
-}
-
-export function toSha256HexLower(s: string): Sha256HexLower {
-  if (!SHA256_HEX.test(s)) {
-    throw new TypeError("expected 64-char lowercase hex Sha256HexLower");
-  }
-  return s as Sha256HexLower;
-}
+import type { JsonDocument } from "@khoralabs/obp-model";
+import type { Sha256HexLower } from "@khoralabs/obp-primitives";
 
 /** Smithy `FrameType` enum. */
 export const FrameType = {

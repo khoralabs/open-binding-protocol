@@ -18,6 +18,8 @@
     "@khoralabs/canonical-json": "workspace:*",
     "@khoralabs/duplex-byte-stream": "workspace:*",
     "@khoralabs/obp-errors": "workspace:*",
+    "@khoralabs/obp-model": "workspace:*",
+    "@khoralabs/obp-primitives": "workspace:*",
     "@khoralabs/obp-nbc": "workspace:*",
     "@khoralabs/obp-persistence": "workspace:*",
     "@khoralabs/obp-session-impl": "workspace:*",

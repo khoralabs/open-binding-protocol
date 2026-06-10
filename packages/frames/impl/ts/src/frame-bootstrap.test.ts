@@ -4,9 +4,9 @@
  */
 
 import { describe, expect, test } from "bun:test";
+import { toSha256HexLower } from "@khoralabs/obp-primitives";
 import { isActorPubkeysAscending, isSessionInitPartyStructure } from "./frame-bootstrap";
 import type { SessionInit } from "./frame-protocol-types";
-import { toSha256HexLower } from "./frame-protocol-types";
 
 const gh = toSha256HexLower("a".repeat(64));
 

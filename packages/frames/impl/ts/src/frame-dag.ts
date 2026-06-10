@@ -1,27 +1,8 @@
-import { createHash } from "node:crypto";
 import { ObpError } from "@khoralabs/obp-errors";
-import type { Frame, FrameType, Sha256HexLower } from "./frame-protocol-types";
-import { toSha256HexLower } from "./frame-protocol-types";
+import type { Sha256HexLower } from "@khoralabs/obp-primitives";
+import type { Frame, FrameType } from "./frame-protocol-types";
 import type { FrameSigner, FrameVerifier } from "./frame-signer";
 import { signingBytesUtf8, tipSha256HexFromCompleteFrame } from "./frame-signing";
-
-function bytesToHexLower(digest: Uint8Array): Sha256HexLower {
-  let s = "";
-  for (let i = 0; i < digest.length; i++) {
-    const b = digest[i];
-    if (b === undefined) {
-      throw new Error("unexpected digest length");
-    }
-    s += b.toString(16).padStart(2, "0");
-  }
-  return toSha256HexLower(s);
-}
-
-/** **`SHA-256(UTF-8(text))`** as **`Sha256HexLower`** (inbound frame tip from exact wire UTF-8). */
-export function sha256HexLowerFromUtf8String(text: string): Sha256HexLower {
-  const digest = new Uint8Array(createHash("sha256").update(text, "utf8").digest());
-  return bytesToHexLower(digest);
-}
 
 /** Canonical signing bytes: full frame JSON with `sig` forced to `""`. */
 export function signingPayloadBytes(frame: Frame): Uint8Array {

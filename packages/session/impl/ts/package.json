@@ -16,7 +16,9 @@
   },
   "dependencies": {
     "@khoralabs/obp-errors": "workspace:*",
-    "@khoralabs/obp-frames-impl": "workspace:*"
+    "@khoralabs/obp-frames-impl": "workspace:*",
+    "@khoralabs/obp-model": "workspace:*",
+    "@khoralabs/obp-primitives": "workspace:*"
   },
   "devDependencies": {
     "@types/bun": "^1.3.14"

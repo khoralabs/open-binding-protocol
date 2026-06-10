@@ -1,7 +1,8 @@
 import { describe, expect, test } from "bun:test";
+import { toSha256HexLower } from "@khoralabs/obp-primitives";
 import { canonicalJsonString } from "./canonical-json";
 import { encodeFramedJson, encodeFramedWire } from "./encode-framed-json";
-import { FrameType, toSha256HexLower } from "./frame-protocol-types";
+import { FrameType } from "./frame-protocol-types";
 
 const gh = toSha256HexLower("d".repeat(64));
 const ph = toSha256HexLower("e".repeat(64));

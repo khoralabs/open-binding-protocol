@@ -1,14 +1,17 @@
 import { describe, expect, test } from "bun:test";
-import { isSha256HexLower, toSha256HexLower } from "./frame-protocol-types";
+
+import { isSha256HexLower, toSha256HexLower } from "./sha256-hex-lower";
 
 describe("Sha256HexLower", () => {
   test("toSha256HexLower", () => {
-    const h = "c".repeat(64);
+    const h = "a".repeat(64);
     expect(toSha256HexLower(h)).toBe(h);
     expect(isSha256HexLower(h)).toBe(true);
   });
 
-  test("invalid", () => {
+  test("rejects invalid", () => {
+    expect(isSha256HexLower("GG".repeat(32))).toBe(false);
+    expect(isSha256HexLower("a".repeat(63))).toBe(false);
     expect(() => toSha256HexLower("short")).toThrow();
   });
 });

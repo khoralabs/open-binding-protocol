@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { ObpError } from "@khoralabs/obp-errors";
+import { toSha256HexLower } from "@khoralabs/obp-primitives";
 import {
   canonicalSessionParties,
   normalizeSessionInit,
@@ -10,7 +11,6 @@ import {
   sessionInitToWire,
 } from "./frame-init-wire";
 import type { SessionInitNormalized, SessionParty } from "./frame-protocol-types";
-import { toSha256HexLower } from "./frame-protocol-types";
 
 const gh = toSha256HexLower("a".repeat(64));
 

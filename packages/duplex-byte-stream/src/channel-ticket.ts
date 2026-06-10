@@ -1,6 +1,4 @@
-function bytesToHex(buf: Uint8Array): string {
-  return [...buf].map((b) => b.toString(16).padStart(2, "0")).join("");
-}
+import { bytesToHexLower } from "@khoralabs/obp-primitives";
 
 /** Copy bytes into a standalone `ArrayBuffer` so WebCrypto accepts `BufferSource` under strict TS. */
 function uint8ArrayToDetachedArrayBuffer(u: Uint8Array): ArrayBuffer {
@@ -11,7 +9,7 @@ function uint8ArrayToDetachedArrayBuffer(u: Uint8Array): ArrayBuffer {
 
 export function generateChannelSecretHex(byteLength = 32): string {
   const raw = crypto.getRandomValues(new Uint8Array(byteLength));
-  return bytesToHex(raw);
+  return bytesToHexLower(raw);
 }
 
 function toB64Url(bytes: Uint8Array): string {

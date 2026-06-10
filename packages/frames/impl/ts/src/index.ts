@@ -20,11 +20,7 @@ export {
   parseHandshakeEphemeralPub,
   x25519SharedSecret,
 } from "./frame-channel-e2ee";
-export {
-  FrameDag,
-  sha256HexLowerFromUtf8String,
-  signingPayloadBytes,
-} from "./frame-dag";
+export { FrameDag, signingPayloadBytes } from "./frame-dag";
 export {
   createFrameDecoder,
   encodeSessionEnvelopeMessage,
@@ -64,21 +60,14 @@ export type {
   Frame,
   FramedWireObject,
   InitEnvelopeWire,
-  JsonDocument,
   PartyIdList,
   SessionEnvelopeCheckpointWire,
   SessionEnvelopeWire,
   SessionInit,
   SessionInitNormalized,
   SessionParty,
-  Sha256HexLower,
 } from "./frame-protocol-types";
-export {
-  FrameType,
-  isSha256HexLower,
-  NEGOTIATION_FRAME_PROTOCOL_VERSION,
-  toSha256HexLower,
-} from "./frame-protocol-types";
+export { FrameType, NEGOTIATION_FRAME_PROTOCOL_VERSION } from "./frame-protocol-types";
 export {
   type RunFrameSessionArgs,
   runFrameSession,

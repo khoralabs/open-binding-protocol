@@ -1,11 +1,10 @@
 import { describe, expect, test } from "bun:test";
 import { ObpError } from "@khoralabs/obp-errors";
-
+import { toSha256HexLower } from "@khoralabs/obp-primitives";
 import { canonicalSessionParties } from "./frame-init-wire";
 import { runFrameMultiplexSession } from "./frame-multiplex-session";
 import { templateMatch } from "./frame-multiplex-session-helpers";
 import type { SessionInitNormalized, SessionParty } from "./frame-protocol-types";
-import { toSha256HexLower } from "./frame-protocol-types";
 
 const gh = toSha256HexLower("a".repeat(64));
 const ghOther = toSha256HexLower("b".repeat(64));

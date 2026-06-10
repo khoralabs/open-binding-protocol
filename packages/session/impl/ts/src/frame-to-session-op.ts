@@ -1,4 +1,5 @@
-import type { JsonDocument, SessionOp } from "./session-protocol-types";
+import type { JsonDocument } from "@khoralabs/obp-model";
+import type { SessionOp } from "./session-protocol-types";
 
 const UNTAGGED_SESSION_ID = "";
 

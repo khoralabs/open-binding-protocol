@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
+import { toSha256HexLower } from "@khoralabs/obp-primitives";
 import { canonicalJsonString } from "./canonical-json";
-import { FrameType, toSha256HexLower } from "./frame-protocol-types";
+import { FrameType } from "./frame-protocol-types";
 import {
   frameSigningPayload,
   signingBytesUtf8,

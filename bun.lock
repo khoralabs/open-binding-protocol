@@ -45,6 +45,9 @@
     "packages/duplex-byte-stream": {
       "name": "@khoralabs/duplex-byte-stream",
       "version": "0.0.0",
+      "dependencies": {
+        "@khoralabs/obp-primitives": "workspace:*",
+      },
       "devDependencies": {
         "@types/bun": "^1.3.14",
       },
@@ -99,8 +102,10 @@
         "@khoralabs/canonical-json": "workspace:*",
         "@khoralabs/duplex-byte-stream": "workspace:*",
         "@khoralabs/obp-errors": "workspace:*",
+        "@khoralabs/obp-model": "workspace:*",
         "@khoralabs/obp-nbc": "workspace:*",
         "@khoralabs/obp-persistence": "workspace:*",
+        "@khoralabs/obp-primitives": "workspace:*",
         "@khoralabs/obp-session-impl": "workspace:*",
         "@noble/curves": "^2.2.0",
       },
@@ -145,6 +150,17 @@
     },
     "packages/nbc/spec": {
       "name": "@khoralabs/obp-nbc-spec",
+    },
+    "packages/obp-primitives": {
+      "name": "@khoralabs/obp-primitives",
+      "version": "0.0.0",
+      "devDependencies": {
+        "@types/bun": "^1.3.14",
+        "typescript": "^5",
+      },
+      "peerDependencies": {
+        "typescript": "^5",
+      },
     },
     "packages/persistence/impl/ts": {
       "name": "@khoralabs/obp-persistence",
@@ -225,6 +241,8 @@
       "dependencies": {
         "@khoralabs/obp-errors": "workspace:*",
         "@khoralabs/obp-frames-impl": "workspace:*",
+        "@khoralabs/obp-model": "workspace:*",
+        "@khoralabs/obp-primitives": "workspace:*",
       },
       "devDependencies": {
         "@types/bun": "^1.3.14",
@@ -322,6 +340,8 @@
     "@khoralabs/obp-persistence": ["@khoralabs/obp-persistence@workspace:packages/persistence/impl/ts"],
 
     "@khoralabs/obp-persistence-spec": ["@khoralabs/obp-persistence-spec@workspace:packages/persistence/spec"],
+
+    "@khoralabs/obp-primitives": ["@khoralabs/obp-primitives@workspace:packages/obp-primitives"],
 
     "@khoralabs/obp-react": ["@khoralabs/obp-react@workspace:packages/react"],
 

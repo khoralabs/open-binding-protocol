@@ -4,9 +4,10 @@
  */
 
 import { ObpError } from "@khoralabs/obp-errors";
+import type { JsonDocument } from "@khoralabs/obp-model";
+import { isSha256HexLower, type Sha256HexLower, toSha256HexLower } from "@khoralabs/obp-primitives";
 import { checkpointForSessionOps } from "./session-merkle";
-import type { JsonDocument, SessionOp } from "./session-protocol-types";
-import { isSha256HexLower, type Sha256HexLower, toSha256HexLower } from "./session-protocol-types";
+import type { SessionOp } from "./session-protocol-types";
 
 /** Wire JSON checkpoint (`seq` is small enough for **`Number`** after JSON parse). */
 export type SessionCheckpointWire = {

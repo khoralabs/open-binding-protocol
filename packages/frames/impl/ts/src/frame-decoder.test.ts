@@ -1,8 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import { ObpError } from "@khoralabs/obp-errors";
+import { toSha256HexLower } from "@khoralabs/obp-primitives";
 import { encodeFramedJson } from "./encode-framed-json";
 import { createFrameDecoder } from "./frame-decoder";
-import { FrameType, toSha256HexLower } from "./frame-protocol-types";
+import { FrameType } from "./frame-protocol-types";
 import { MAX_FRAME_BYTES } from "./length-prefix";
 
 const gh = toSha256HexLower("d".repeat(64));

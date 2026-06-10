@@ -1,6 +1,6 @@
 /** Ed25519 frame signatures (hex-encoded raw pubkey + hex-encoded 64-byte sig). */
 
-const HEX = /^[0-9a-f]*$/;
+import { bytesToHexLower, hexToBytes } from "@khoralabs/obp-primitives";
 
 export type FrameSigner = {
   readonly actor: string;
@@ -35,23 +35,7 @@ export async function generateEd25519KeyPair(): Promise<CryptoKeyPair> {
 
 export async function publicKeyActorHex(publicKey: CryptoKey): Promise<string> {
   const raw = new Uint8Array(await crypto.subtle.exportKey("raw", publicKey));
-  return bytesToHex(raw);
-}
-
-function bytesToHex(bytes: Uint8Array): string {
-  return [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
-}
-
-function hexToBytes(hex: string): Uint8Array {
-  if (hex.length % 2 !== 0 || !HEX.test(hex)) {
-    throw new Error("invalid hex string");
-  }
-  const len = hex.length / 2;
-  const buf = new Uint8Array(len);
-  for (let i = 0; i < len; i++) {
-    buf[i] = Number.parseInt(hex.slice(i * 2, i * 2 + 2), 16);
-  }
-  return Uint8Array.from(buf);
+  return bytesToHexLower(raw);
 }
 
 export async function importEd25519PublicKeyFromActorHex(actor: string): Promise<CryptoKey> {
@@ -68,7 +52,7 @@ export async function createEd25519FrameSigner(
     actor,
     async sign(bytes: Uint8Array): Promise<string> {
       const sig = new Uint8Array(await crypto.subtle.sign("Ed25519", privateKey, bytes as never));
-      return bytesToHex(sig);
+      return bytesToHexLower(sig);
     },
   };
 }
