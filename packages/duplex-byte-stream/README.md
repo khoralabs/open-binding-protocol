@@ -40,11 +40,13 @@ import {
 } from "@khoralabs/duplex-byte-stream";
 
 const secret = generateChannelSecretHex();
-const ticket = await signChannelTicket(channelId, secret);
+const ticket = await signChannelTicket(channelId, secret, {
+  expiresAtMs: Date.now() + 86_400_000,
+});
 const valid = await verifyChannelTicket(channelId, ticket, secret); // true
 ```
 
-Wire format: `base64url(payload).base64url(sig)`.
+Wire format: `base64url(v1:{"cid","exp",...}).base64url(sig)`.
 
 ## Scripts
 

@@ -33,28 +33,99 @@ async function importHmacKey(secretHex: string): Promise<CryptoKey> {
   );
 }
 
-function channelIdPayloadBytes(channelId: string): Uint8Array {
-  return new TextEncoder().encode(channelId);
+const TICKET_V1_PREFIX = "v1:";
+
+export type ChannelTicketClaims = {
+  expiresAtMs: number;
+  nonceHex?: string;
+};
+
+export type VerifiedChannelTicket = {
+  channelId: string;
+  expiresAtMs: number;
+  nonceHex?: string;
+};
+
+function isRecord(v: unknown): v is Record<string, unknown> {
+  return v !== null && typeof v === "object" && !Array.isArray(v);
 }
 
-/** Compare UTF-8 payloads without early exit (length + bytes). */
-function constantTimeEqualBytes(a: Uint8Array, b: Uint8Array): boolean {
-  const maxLen = Math.max(a.length, b.length);
-  let diff = a.length ^ b.length;
-  for (let i = 0; i < maxLen; i++) {
-    const av = a.at(i) ?? 0;
-    const bv = b.at(i) ?? 0;
-    diff |= av ^ bv;
+function encodeTicketPayload(channelId: string, claims: ChannelTicketClaims): Uint8Array {
+  const body: Record<string, string | number> = {
+    cid: channelId,
+    exp: claims.expiresAtMs,
+  };
+  if (claims.nonceHex !== undefined) {
+    body.n = claims.nonceHex;
   }
-  return diff === 0;
+  return new TextEncoder().encode(TICKET_V1_PREFIX + JSON.stringify(body));
+}
+
+function parseTicketPayload(
+  payloadBytes: Uint8Array,
+  channelId: string,
+): VerifiedChannelTicket | null {
+  const text = new TextDecoder().decode(payloadBytes);
+  if (!text.startsWith(TICKET_V1_PREFIX)) {
+    return null;
+  }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text.slice(TICKET_V1_PREFIX.length)) as unknown;
+  } catch {
+    return null;
+  }
+  if (!isRecord(parsed) || parsed.cid !== channelId) {
+    return null;
+  }
+  if (typeof parsed.exp !== "number") {
+    return null;
+  }
+  const nonceHex = typeof parsed.n === "string" ? parsed.n : undefined;
+  return { channelId, expiresAtMs: parsed.exp, nonceHex };
+}
+
+async function verifyTicketPayload(
+  channelId: string,
+  ticket: string,
+  secretHex: string,
+): Promise<VerifiedChannelTicket | null> {
+  const dot = ticket.indexOf(".");
+  if (dot < 1) return null;
+  const payloadB64 = ticket.slice(0, dot);
+  const sigB64 = ticket.slice(dot + 1);
+  if (payloadB64 === "" || sigB64 === "") return null;
+  let payloadBytes: Uint8Array;
+  let sigBytes: Uint8Array;
+  try {
+    payloadBytes = fromB64Url(payloadB64);
+    sigBytes = fromB64Url(sigB64);
+  } catch {
+    return null;
+  }
+  const claims = parseTicketPayload(payloadBytes, channelId);
+  if (claims === null) return null;
+  const key = await importHmacKey(secretHex);
+  const ok = await crypto.subtle.verify(
+    "HMAC",
+    key,
+    uint8ArrayToDetachedArrayBuffer(sigBytes),
+    uint8ArrayToDetachedArrayBuffer(payloadBytes),
+  );
+  if (!ok) return null;
+  return claims;
 }
 
 /**
- * HMAC-SHA256(utf8(channelId)). Relay-scoped join proof; no OBP types.
- * Wire: base64url(payload).base64url(sig)
+ * HMAC-SHA256 over v1 ticket payload. Relay-scoped join proof; no OBP types.
+ * Wire: base64url(`v1:{"cid","exp",...}`).base64url(sig)
  */
-export async function signChannelTicket(channelId: string, secretHex: string): Promise<string> {
-  const payloadBytes = channelIdPayloadBytes(channelId);
+export async function signChannelTicket(
+  channelId: string,
+  secretHex: string,
+  claims: ChannelTicketClaims,
+): Promise<string> {
+  const payloadBytes = encodeTicketPayload(channelId, claims);
   const key = await importHmacKey(secretHex);
   const sigBuf = await crypto.subtle.sign(
     "HMAC",
@@ -64,31 +135,23 @@ export async function signChannelTicket(channelId: string, secretHex: string): P
   return `${toB64Url(payloadBytes)}.${toB64Url(new Uint8Array(sigBuf))}`;
 }
 
+export async function verifyChannelTicketClaims(
+  channelId: string,
+  ticket: string,
+  secretHex: string,
+  nowMs = Date.now(),
+): Promise<VerifiedChannelTicket | null> {
+  const claims = await verifyTicketPayload(channelId, ticket, secretHex);
+  if (claims === null || claims.expiresAtMs <= nowMs) {
+    return null;
+  }
+  return claims;
+}
+
 export async function verifyChannelTicket(
   channelId: string,
   ticket: string,
   secretHex: string,
 ): Promise<boolean> {
-  const dot = ticket.indexOf(".");
-  if (dot < 1) return false;
-  const payloadB64 = ticket.slice(0, dot);
-  const sigB64 = ticket.slice(dot + 1);
-  if (payloadB64 === "" || sigB64 === "") return false;
-  let payloadBytes: Uint8Array;
-  let sigBytes: Uint8Array;
-  try {
-    payloadBytes = fromB64Url(payloadB64);
-    sigBytes = fromB64Url(sigB64);
-  } catch {
-    return false;
-  }
-  const expected = channelIdPayloadBytes(channelId);
-  if (!constantTimeEqualBytes(payloadBytes, expected)) return false;
-  const key = await importHmacKey(secretHex);
-  return crypto.subtle.verify(
-    "HMAC",
-    key,
-    uint8ArrayToDetachedArrayBuffer(sigBytes),
-    uint8ArrayToDetachedArrayBuffer(payloadBytes),
-  );
+  return (await verifyChannelTicketClaims(channelId, ticket, secretHex)) !== null;
 }

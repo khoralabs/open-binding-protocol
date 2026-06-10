@@ -19,6 +19,7 @@ export type RelayedFrameRecord = {
 export interface FrameRelayStoreStrategy {
   upsertChannelAdmission(record: ChannelAdmissionRecord): void;
   getPairingSecretIfActive(channelId: string, nowMs: number): string | undefined;
+  getChannelAdmissionIfActive(channelId: string, nowMs: number): ChannelAdmissionRecord | undefined;
   enqueueRelayedFrame(channelId: string, bytes: Uint8Array): number;
   listRelayedFramesAfter(channelId: string, afterId: number): RelayedFrameRecord[];
   purgeRelayedFramesForChannel(channelId: string): void;

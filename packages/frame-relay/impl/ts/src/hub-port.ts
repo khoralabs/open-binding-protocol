@@ -13,7 +13,10 @@ export interface FrameRelayHubPort {
   createChannel(channelId: string, ttlMs?: number): Promise<{ ticket: string }>;
   /** New ticket + secret for an existing channel without clearing buffered frames (rejoin). */
   rotateChannelTicket(channelId: string, ttlMs?: number): Promise<{ ticket: string }>;
-  /** Sign a ticket with the current pairing secret without rotating (shared multiplex ticket). */
+  /**
+   * Sign a ticket with the current pairing secret. Default: reusable until channel expiry.
+   * With `admissionPolicy.rotateOnMint`, rotates the secret and invalidates prior tickets.
+   */
   mintChannelTicket(channelId: string): Promise<{ ticket: string } | undefined>;
   verifyTicket(channelId: string, ticket: string): Promise<boolean>;
   /** Requires a hub-issued admission ticket; rejects invalid or expired tickets. */

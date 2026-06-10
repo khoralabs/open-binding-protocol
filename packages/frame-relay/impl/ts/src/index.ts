@@ -1,3 +1,4 @@
+export type { FrameRelayAdmissionPolicy } from "./admission-policy";
 export {
   type AttachDuplexFrameRelayPeerResult,
   attachDuplexAsFrameRelayPeer,

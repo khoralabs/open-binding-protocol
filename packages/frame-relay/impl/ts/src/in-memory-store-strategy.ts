@@ -28,12 +28,19 @@ export class InMemoryFrameRelayStoreStrategy implements FrameRelayStoreStrategy 
     this.admissions.set(record.channelId, record);
   }
 
-  getPairingSecretIfActive(channelId: string, nowMs: number): string | undefined {
+  getChannelAdmissionIfActive(
+    channelId: string,
+    nowMs: number,
+  ): ChannelAdmissionRecord | undefined {
     const row = this.admissions.get(channelId);
     if (row === undefined || row.expiresAtMs <= nowMs) {
       return undefined;
     }
-    return row.pairingSecretHex;
+    return row;
+  }
+
+  getPairingSecretIfActive(channelId: string, nowMs: number): string | undefined {
+    return this.getChannelAdmissionIfActive(channelId, nowMs)?.pairingSecretHex;
   }
 
   enqueueRelayedFrame(channelId: string, bytes: Uint8Array): number {

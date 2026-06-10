@@ -38,3 +38,5 @@ Anyone with **both** the database file and the field encryption key can still mi
 ### Frame relay WebSocket admission
 
 `upgradeFrameRelayHubWebSocket` verifies HMAC tickets but does **not** enforce `Origin`, TLS, or rate limits by default. Browser-facing relays **must** pass `allowedOrigins` (or equivalent checks in `authorize`) — ticket-only admission does not prevent cross-site WebSocket CSRF. Use `requireTls: true` when upgrades are served over HTTPS.
+
+Hub tickets are **reusable until channel expiry** unless `admissionPolicy` enables `singleUseTickets`, `ticketTtlMs`, or `rotateOnMint`. Treat stolen tickets as valid for the remaining window; use short TTLs or one-time nonces when admission must not be replayable.

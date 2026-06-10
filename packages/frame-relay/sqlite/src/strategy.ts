@@ -74,8 +74,9 @@ export function createSqliteFrameRelayStoreStrategy(
        created_at_ms = excluded.created_at_ms,
        expires_at_ms = excluded.expires_at_ms`,
   );
-  const selectPairingSecret = db.query(
-    `SELECT pairing_secret_hex FROM rooms WHERE channel_id = ? AND expires_at_ms > ?`,
+  const selectAdmission = db.query(
+    `SELECT pairing_secret_hex, created_at_ms, expires_at_ms
+     FROM rooms WHERE channel_id = ? AND expires_at_ms > ?`,
   );
   const enqueueFrameStmt = db.query(
     `INSERT INTO room_frames (channel_id, bytes, byte_length) VALUES (?, ?, ?) RETURNING id`,
@@ -96,15 +97,27 @@ export function createSqliteFrameRelayStoreStrategy(
       );
     },
 
-    getPairingSecretIfActive(channelId: string, nowMs: number): string | undefined {
-      const row = selectPairingSecret.get(channelId, nowMs) as
-        | { pairing_secret_hex: string }
+    getChannelAdmissionIfActive(
+      channelId: string,
+      nowMs: number,
+    ): ChannelAdmissionRecord | undefined {
+      const row = selectAdmission.get(channelId, nowMs) as
+        | { pairing_secret_hex: string; created_at_ms: number; expires_at_ms: number }
         | null
         | undefined;
       if (row == null) {
         return undefined;
       }
-      return decryptPairingSecretHex(row.pairing_secret_hex, pairingSecretKey);
+      return {
+        channelId,
+        pairingSecretHex: decryptPairingSecretHex(row.pairing_secret_hex, pairingSecretKey),
+        createdAtMs: row.created_at_ms,
+        expiresAtMs: row.expires_at_ms,
+      };
+    },
+
+    getPairingSecretIfActive(channelId: string, nowMs: number): string | undefined {
+      return this.getChannelAdmissionIfActive(channelId, nowMs)?.pairingSecretHex;
     },
 
     enqueueRelayedFrame(channelId: string, bytes: Uint8Array): number {

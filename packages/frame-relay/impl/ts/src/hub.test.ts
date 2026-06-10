@@ -341,6 +341,44 @@ describe("attachDuplexAsFrameRelayPeer", () => {
     expect(store.getPairingSecretIfActive("old", now)).toBeUndefined();
   });
 
+  test("singleUseTickets rejects second attach with same ticket", async () => {
+    const hub = createFrameRelayHub({
+      store: new InMemoryFrameRelayStoreStrategy(),
+      admissionPolicy: { singleUseTickets: true },
+    });
+    const { ticket } = await hub.createChannel("room-one-shot");
+    await hub.attachPeer("room-one-shot", { send() {} }, ticket);
+    await expect(hub.attachPeer("room-one-shot", { send() {} }, ticket)).rejects.toThrow(
+      "invalid or expired ticket",
+    );
+  });
+
+  test("ticketTtlMs rejects expired ticket", async () => {
+    const hub = createFrameRelayHub({
+      store: new InMemoryFrameRelayStoreStrategy(),
+      admissionPolicy: { ticketTtlMs: 1 },
+    });
+    const { ticket } = await hub.createChannel("room-short");
+    await Bun.sleep(5);
+    await expect(hub.attachPeer("room-short", { send() {} }, ticket)).rejects.toThrow(
+      "invalid or expired ticket",
+    );
+  });
+
+  test("rotateOnMint invalidates prior ticket", async () => {
+    const hub = createFrameRelayHub({
+      store: new InMemoryFrameRelayStoreStrategy(),
+      admissionPolicy: { rotateOnMint: true },
+    });
+    const { ticket: first } = await hub.createChannel("room-rotate");
+    const minted = await hub.mintChannelTicket("room-rotate");
+    expect(minted?.ticket).toBeDefined();
+    await expect(hub.attachPeer("room-rotate", { send() {} }, first)).rejects.toThrow(
+      "invalid or expired ticket",
+    );
+    await hub.attachPeer("room-rotate", { send() {} }, minted?.ticket ?? "");
+  });
+
   test("dispose closes duplex", async () => {
     const store = new InMemoryFrameRelayStoreStrategy();
     const hub = createFrameRelayHub({ store });
