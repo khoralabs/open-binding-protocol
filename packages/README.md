@@ -1,80 +1,88 @@
-# OBP
+# OBP — packages
 
-## Layering (OBP vs NBC vs frames)
+## Protocol layering
 
-- **`khora.obp`:** Peer **DAG** — parties, offers, **ports as affordances** (identity, ref, promise, type), **BINDS** as the bind-with-offer verb (**`BindsEdge`** is graph identity only). Policy payloads use **`khora.obp.nbc`** shapes and **`ObpPersistence`** **`Document`** fields on bind operations / listings—not fields on **`BindsEdge`**.
-- **`khora.obp.nbc`:** **When** a bind is allowed; **`NbcPortExposePolicy`**, **`NbcBindSatisfaction`**, **`NbcRowCommitMeta`** (`packages/obp/v2/nbc/spec/model/nbc-policy.smithy`); **NegotiatedBindingConvention** rules **N1–N9**.
-- **`khora.obp.frame`:** Signed **Frame** DAG + **`SessionInit`**; **`Frame.body`** is **opaque** JSON for **TURN** / **END_OFFERS** / **TERMINATE** — no normative `TurnBody` / `PortSpec` wire shapes in v2.
+- **`khora.obp`:** Peer **DAG** — parties, offers, **ports as affordances** (identity, ref, promise, type), **BINDS** as the bind-with-offer verb (**`BindsEdge`** is graph identity only). Policy payloads use **`khora.obp.nbc`** shapes and **`ObpPersistence`** **`Document`** fields on bind operations / listings — not fields on **`BindsEdge`**.
+- **`khora.obp.nbc`:** **When** a bind is allowed; **`NbcPortExposePolicy`**, **`NbcBindSatisfaction`**, **`NbcRowCommitMeta`** (`nbc/spec/model/nbc-policy.smithy`); **NegotiatedBindingConvention** rules **N1–N9**.
+- **`khora.obp.frame`:** Signed **Frame** DAG + **`SessionInit`**; **`Frame.body`** is **opaque** JSON for **TURN** / **END_OFFERS** / **TERMINATE** — no normative `TurnBody` / `PortSpec` wire shapes.
 
 ```mermaid
 flowchart LR
-  frame[cfd_obp_frame]
-  nbc[cfd_obp_nbc]
-  obp[cfd_obp]
+  frame[obp_frame]
+  nbc[obp_nbc]
+  obp[obp]
   frame -->|"verify chain"| nbc
   nbc -->|"if admissible"| obp
 ```
 
 ## Modules
 
-| Directory | Role | Primary Smithy |
-|-----------|------|------------------|
-| `model/spec` | Graph vocabulary (`Party`, `Offer`, **thin** `Port`, edges, …) | `model/shapes.smithy` |
-| `persistence/spec` | `ObpPersistence` service + ops | `model/persistence.smithy` |
-| `nbc/spec` | NBC rules + policy shapes | `model/negotiated-binding-convention.smithy`, `model/nbc-policy.smithy` |
-| `frames/spec` | Frame DAG, opaque `body` | `model/frame-protocol.smithy` |
-| `session/spec` | Decentralized session | `model/session-protocol.smithy` |
-| `transport-http2/spec` | HTTP/2 reference binding | `model/frame-binding-http2.smithy` |
+| Directory | Package | Role | Primary Smithy |
+|-----------|---------|------|----------------|
+| `model/spec` | `@khoralabs/obp-model-spec` | Graph vocabulary (`Party`, `Offer`, thin `Port`, edges) | `model/shapes.smithy` |
+| `model/impl/ts` | `@khoralabs/obp-model` | TypeScript types for `khora.obp` | — |
+| `persistence/spec` | `@khoralabs/obp-persistence-spec` | `ObpPersistence` service + ops | `model/persistence.smithy` |
+| `persistence/impl/ts` | `@khoralabs/obp-persistence` | Strategy adapter + client | — |
+| `persistence/sqlite` | `@khoralabs/obp-sqlite-persistence` | SQLite reference strategy | — |
+| `nbc/spec` | `@khoralabs/obp-nbc-spec` | NBC rules + policy shapes | `model/negotiated-binding-convention.smithy`, `model/nbc-policy.smithy` |
+| `nbc/impl/ts` | `@khoralabs/obp-nbc` | Bind-time checks, `applyNbcTurn`, session helpers | — |
+| `bind-policy` | `@khoralabs/nbc-bind-policy` | JSON Schema + AJV validation for NBC bind payloads | — |
+| `frames/spec` | `@khoralabs/obp-frames-spec` | Frame DAG, opaque `body` | `model/frame-protocol.smithy` |
+| `frames/impl/ts` | `@khoralabs/obp-frames-impl` | Wire types, canonical JSON, signing, framing | — |
+| `session/spec` | `@khoralabs/obp-session-spec` | Decentralized session | `model/session-protocol.smithy` |
+| `session/impl/ts` | `@khoralabs/obp-session-impl` | Merkle checkpoints, envelope verification | — |
+| `transport-http2/spec` | `@khoralabs/obp-transport-http2-spec` | HTTP/2 reference binding | `model/frame-binding-http2.smithy` |
+| `transport-http2/impl/ts` | `@khoralabs/obp-transport-http2` | HTTP/2 transport | — |
+| `transport-ws/impl/ts` | `@khoralabs/obp-transport-ws` | WebSocket transport | — |
+| `frame-relay/spec` | `@khoralabs/obp-frame-relay-spec` | `RelayEnvelope` + `FrameRelayStore` service | `model/hub-protocol.smithy` |
+| `frame-relay/impl/ts` | `@khoralabs/obp-frame-relay` | Hub runtime, store strategy port, Bun WS helpers | — |
+| `frame-relay/sqlite` | `@khoralabs/obp-frame-relay-sqlite` | SQLite `FrameRelayStoreStrategy` | — |
+| `duplex-byte-stream` | `@khoralabs/duplex-byte-stream` | `DuplexByteStream` interface, channel admission tickets | — |
+| `react` | `@khoralabs/obp-react` | React NBC chain visualization (XYFlow) | — |
+| `errors/impl/ts` | `@khoralabs/obp-errors` | Shared `ObpError` / `ObpErrorCode` | — |
 
 ## Canonical namespaces
 
-| Folder | Namespace(s) |
-|--------|----------------|
+| Folder | Namespace |
+|--------|-----------|
 | `model/` | `khora.obp` |
-| `persistence/` | `khora.obp` (extends the same aggregate via multi-root `sources`) |
+| `persistence/` | `khora.obp` (multi-root sources extending the model aggregate) |
 | `nbc/` | `khora.obp.nbc` |
 | `frames/` | `khora.obp.frame` |
 | `session/` | `khora.obp.session` |
 | `transport-http2/` | `khora.obp.frame.http2` |
 
-## Validate
+## Validate Smithy specs
 
-From the repo root, either run all packages in order:
+From the repo root, run all packages in dependency order:
 
 ```sh
-bash packages/obp/v2/validate-all.sh
+bash packages/validate-all.sh
 ```
 
-Or per package (working directory is `…/spec`):
+Or per package (working directory is the `spec/` folder):
 
 ```sh
 smithy validate model && smithy build
 ```
 
-Each `*/spec/smithy-build.json` lists **relative** `sources` (paths ascend to `v2/` then into sibling packages, e.g. `../../model/spec/model`) so downstream builds compose model + local files **without** duplicating shapes in the same namespace.
+Each `*/spec/smithy-build.json` lists **relative** `sources` so downstream builds compose model + local files without duplicating shapes in the same namespace.
 
-## Additive vs cutover
-
-- **Until cutover:** run `smithy validate` only **per** `v2/*/spec` package. Do **not** merge [`packages/obp/persistence/spec`](../persistence/spec) model sources with `v2/**` in a single Smithy build, or you will get duplicate definitions for the same namespace.
-- **After cutover:** retire or shrink the monolithic spec tree and point CI at these packages; TypeScript can follow the same boundaries.
-
-## Composition (dependency order)
+## Spec dependency graph
 
 ```mermaid
 flowchart TB
-  modelPkg[v2_model_spec]
-  persistPkg[v2_persistence_spec]
-  nbcPkg[v2_nbc_spec]
-  framesPkg[v2_frames_spec]
-  sessionPkg[v2_session_spec]
-  http2Pkg[v2_transport_http2_spec]
-  modelPkg --> persistPkg
-  modelPkg --> framesPkg
-  persistPkg --> nbcPkg
-  framesPkg --> sessionPkg
-  framesPkg --> http2Pkg
+  modelSpec[model/spec]
+  persistSpec[persistence/spec]
+  nbcSpec[nbc/spec]
+  framesSpec[frames/spec]
+  sessionSpec[session/spec]
+  http2Spec[transport-http2/spec]
+  relaySpec[frame-relay/spec]
+  modelSpec --> persistSpec
+  modelSpec --> framesSpec
+  persistSpec --> nbcSpec
+  framesSpec --> sessionSpec
+  framesSpec --> http2Spec
+  framesSpec --> relaySpec
 ```
-
-## npm package names
-
-Private workspace-style names: `@khoralabs/obp-model-spec`, `@khoralabs/obp-persistence-spec`, `@khoralabs/obp-nbc-spec`, `@khoralabs/obp-frames-spec`, `@khoralabs/obp-session-spec`, `@khoralabs/obp-transport-http2-spec`.

@@ -1,21 +1,23 @@
-# bun-react-tailwind-template
+# OBP React examples
 
-To install dependencies:
+Live dev example for `@khoralabs/obp-react` — renders an NBC chain graph using XYFlow and Tailwind.
+
+## Setup
 
 ```bash
 bun install
 ```
 
-To start a development server:
+## Development
 
 ```bash
-bun dev
+bun dev       # hot-reload dev server (Bun HMR)
 ```
 
-To run for production:
+## Production
 
 ```bash
-bun start
+bun start     # NODE_ENV=production
 ```
 
-This project was created using `bun init` in bun v1.3.4. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
+The example imports `@khoralabs/obp-react` from the workspace and renders a demo NBC chain graph sourced from `src/demo-graph.ts`. Edit that file to explore different graph shapes.
