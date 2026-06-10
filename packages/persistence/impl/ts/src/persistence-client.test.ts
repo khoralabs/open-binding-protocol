@@ -114,6 +114,28 @@ describe("max_bindings enforcement", () => {
 });
 
 describe("bindPort + listBinds", () => {
+  test("rejects duplicate bind for same offer and port", async () => {
+    const client = makeClient();
+    const { party } = await client.registerParty({ name: "Dup" });
+    const { offer } = await client.extendOffer({
+      partyId: party.id,
+      offer: { id: "", type: "step" },
+      bindPortId: "",
+      bind_payload: null,
+    });
+    const { port } = await client.exposePort({
+      offerId: offer.id,
+      port: { id: "", type: "slot", promise: "p", ref: "" },
+    });
+    await client.bindPort({ offerId: offer.id, portId: port.id, bind_payload: null });
+    await expect(
+      client.bindPort({ offerId: offer.id, portId: port.id, bind_payload: null }),
+    ).rejects.toMatchObject({
+      code: "VALIDATION",
+      message: expect.stringContaining("Duplicate bind"),
+    });
+  });
+
   test("records bind row", async () => {
     const client = makeClient();
     const { party } = await client.registerParty({ name: "Dave" });

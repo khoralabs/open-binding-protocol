@@ -72,6 +72,12 @@ export class InMemoryObpPersistenceStrategy implements ObpPersistenceStrategy {
     return `id-${++this.seq}`;
   }
 
+  private assertNoDuplicateBind(offerId: string, portId: string): void {
+    if (this.binds.some((b) => b.offerId === offerId && b.portId === portId)) {
+      throw new ObpError("VALIDATION", `Duplicate bind for offer ${offerId} and port ${portId}`);
+    }
+  }
+
   private loadMaxBindingsMap(): Map<string, number> {
     const m = new Map<string, number>();
     for (const [portId, policy] of this.portExposePolicies) {
@@ -135,6 +141,7 @@ export class InMemoryObpPersistenceStrategy implements ObpPersistenceStrategy {
         maxBindingsByPortId: this.loadMaxBindingsMap(),
         binds: this.binds,
       });
+      this.assertNoDuplicateBind(offer.id, bindPortId);
       this.binds.push({
         offerId: offer.id,
         portId: bindPortId,
@@ -209,6 +216,7 @@ export class InMemoryObpPersistenceStrategy implements ObpPersistenceStrategy {
   }
 
   async bindPort(input: BindPortInput): Promise<BindPortOutput> {
+    this.assertNoDuplicateBind(input.offerId, input.portId);
     if (input.assertAdmissible) {
       input.assertAdmissible(this.buildBindPortTxnSnapshot());
     } else {
