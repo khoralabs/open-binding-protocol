@@ -1,7 +1,7 @@
-import { SCHEMA_CACHE_CANONICAL_JSON, stableStringify } from "@khoralabs/canonical-json";
 import { ObpError } from "@khoralabs/obp-errors";
 import type { ValidateFunction } from "ajv";
 import Ajv2020 from "ajv/dist/2020.js";
+import { SCHEMA_CACHE_CANONICAL_JSON, stableStringify } from "./stable-stringify";
 
 const ajv = new Ajv2020({ allErrors: true, strict: true });
 const compileCache = new Map<string, ValidateFunction>();

@@ -1,19 +1,15 @@
 /**
- * How `undefined` is encoded in canonical JSON.
- *
- * - `"null"` — every `undefined` becomes JSON `null` (frame signing / tip hashing).
- * - `"omit"` — object keys whose value is `undefined` are dropped (schema cache keys).
+ * Sorted-key canonical JSON for AJV compile-cache keys (`SCHEMA_CACHE_CANONICAL_JSON`).
+ * Frame signing uses a separate implementation in `@khoralabs/obp-frames-impl` (`undefined` → `null`).
  */
-export type CanonicalUndefinedPolicy = "null" | "omit";
+
+export type CanonicalUndefinedPolicy = "omit";
 
 export type CanonicalJsonPolicy = {
   undefined: CanonicalUndefinedPolicy;
 };
 
-/** Frame `canonical_json` per `khora.obp.frame#NegotiationFrameProtocol`. */
-export const FRAME_SIGNING_CANONICAL_JSON: CanonicalJsonPolicy = { undefined: "null" };
-
-/** Sorted-key JSON for AJV compile-cache keys and other plain JSON objects. */
+/** Sorted-key JSON for AJV compile-cache keys; object keys with `undefined` values are dropped. */
 export const SCHEMA_CACHE_CANONICAL_JSON: CanonicalJsonPolicy = { undefined: "omit" };
 
 function stableStringifyInner(value: unknown, policy: CanonicalJsonPolicy): string {
@@ -45,18 +41,4 @@ export function stableStringify(
   policy: CanonicalJsonPolicy = SCHEMA_CACHE_CANONICAL_JSON,
 ): string {
   return stableStringifyInner(value, policy);
-}
-
-export function canonicalJsonString(
-  value: unknown,
-  policy: CanonicalJsonPolicy = FRAME_SIGNING_CANONICAL_JSON,
-): string {
-  return stableStringify(value, policy);
-}
-
-export function canonicalJsonUtf8(
-  value: unknown,
-  policy: CanonicalJsonPolicy = FRAME_SIGNING_CANONICAL_JSON,
-): Uint8Array {
-  return new TextEncoder().encode(canonicalJsonString(value, policy));
 }

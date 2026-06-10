@@ -26,8 +26,7 @@ flowchart LR
 | `persistence/sqlite` | `@khoralabs/obp-sqlite-persistence` | SQLite reference strategy | — |
 | `nbc/spec` | `@khoralabs/obp-nbc-spec` | NBC rules + policy shapes | `model/negotiated-binding-convention.smithy`, `model/nbc-policy.smithy` |
 | `nbc/impl/ts` | `@khoralabs/obp-nbc` | Bind-time checks, `applyNbcTurn`, session helpers | — |
-| `bind-policy` | `@khoralabs/nbc-bind-policy` | JSON Schema + AJV validation for NBC bind payloads | — |
-| `canonical-json` | `@khoralabs/canonical-json` | Deterministic canonical JSON with explicit undefined policy | — |
+| `bind-policy` | `@khoralabs/nbc-bind-policy` | JSON Schema + AJV validation; `stableStringify` for schema cache keys | — |
 | `obp-primitives` | `@khoralabs/obp-primitives` | Hex encoding, SHA-256 helpers, `Sha256HexLower` | — |
 | `frames/spec` | `@khoralabs/obp-frames-spec` | Frame DAG, opaque `body` | `model/frame-protocol.smithy` |
 | `frames/impl/ts` | `@khoralabs/obp-frames-impl` | Wire types, canonical JSON, signing, framing | — |

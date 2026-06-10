@@ -18,7 +18,9 @@ After E2EE decrypt, the **receiving peer** validates `bind_payload` against the 
 
 ## Exports
 
-**`validateNbcBindPayloadForPort`**, **`validateBindPolicyAtExpose`**, schema constants, **`stableStringify`** (`SCHEMA_CACHE_CANONICAL_JSON` — omits `undefined` keys), and **`formatAjvErrorsForAgent`**. Shared canonical JSON lives in **`@khoralabs/canonical-json`** (frame signing uses **`FRAME_SIGNING_CANONICAL_JSON`** / `undefined` → `null`).
+**`validateNbcBindPayloadForPort`**, **`validateBindPolicyAtExpose`**, **`stableStringify`** + **`SCHEMA_CACHE_CANONICAL_JSON`** (sorted-key JSON for AJV compile-cache keys; omits `undefined` object properties), and **`formatAjvErrorsForAgent`**.
+
+Frame signing canonical JSON (`undefined` → `null`) lives in **`@khoralabs/obp-frames-impl`** (`canonicalJsonString` / `canonicalJsonUtf8`), not in this package.
 
 AJV runs with **`strict: true`**; unknown schema keywords fail at compile time.
 

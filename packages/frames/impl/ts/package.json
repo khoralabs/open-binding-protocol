@@ -15,7 +15,6 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@khoralabs/canonical-json": "workspace:*",
     "@khoralabs/duplex-byte-stream": "workspace:*",
     "@khoralabs/obp-errors": "workspace:*",
     "@khoralabs/obp-model": "workspace:*",
