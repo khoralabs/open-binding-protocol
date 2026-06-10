@@ -98,6 +98,9 @@
         "typescript": "^5",
       },
     },
+    "packages/frames/spec": {
+      "name": "@khoralabs/obp-frames-spec",
+    },
     "packages/model/impl/ts": {
       "name": "@khoralabs/obp-model",
       "version": "0.0.0",
@@ -107,6 +110,9 @@
       "peerDependencies": {
         "typescript": "^5",
       },
+    },
+    "packages/model/spec": {
+      "name": "@khoralabs/obp-model-spec",
     },
     "packages/nbc/impl/ts": {
       "name": "@khoralabs/obp-nbc",
@@ -123,6 +129,9 @@
       "peerDependencies": {
         "typescript": "^5",
       },
+    },
+    "packages/nbc/spec": {
+      "name": "@khoralabs/obp-nbc-spec",
     },
     "packages/persistence/impl/ts": {
       "name": "@khoralabs/obp-persistence",
@@ -211,6 +220,9 @@
         "typescript": "^5",
       },
     },
+    "packages/session/spec": {
+      "name": "@khoralabs/obp-session-spec",
+    },
     "packages/transport-http2/impl/ts": {
       "name": "@khoralabs/obp-transport-http2",
       "version": "0.0.0",
@@ -227,6 +239,9 @@
       "peerDependencies": {
         "typescript": "^5",
       },
+    },
+    "packages/transport-http2/spec": {
+      "name": "@khoralabs/obp-transport-http2-spec",
     },
     "packages/transport-ws/impl/ts": {
       "name": "@khoralabs/obp-transport-ws",
@@ -279,9 +294,15 @@
 
     "@khoralabs/obp-frames-impl": ["@khoralabs/obp-frames-impl@workspace:packages/frames/impl/ts"],
 
+    "@khoralabs/obp-frames-spec": ["@khoralabs/obp-frames-spec@workspace:packages/frames/spec"],
+
     "@khoralabs/obp-model": ["@khoralabs/obp-model@workspace:packages/model/impl/ts"],
 
+    "@khoralabs/obp-model-spec": ["@khoralabs/obp-model-spec@workspace:packages/model/spec"],
+
     "@khoralabs/obp-nbc": ["@khoralabs/obp-nbc@workspace:packages/nbc/impl/ts"],
+
+    "@khoralabs/obp-nbc-spec": ["@khoralabs/obp-nbc-spec@workspace:packages/nbc/spec"],
 
     "@khoralabs/obp-persistence": ["@khoralabs/obp-persistence@workspace:packages/persistence/impl/ts"],
 
@@ -291,9 +312,13 @@
 
     "@khoralabs/obp-session-impl": ["@khoralabs/obp-session-impl@workspace:packages/session/impl/ts"],
 
+    "@khoralabs/obp-session-spec": ["@khoralabs/obp-session-spec@workspace:packages/session/spec"],
+
     "@khoralabs/obp-sqlite-persistence": ["@khoralabs/obp-sqlite-persistence@workspace:packages/persistence/sqlite"],
 
     "@khoralabs/obp-transport-http2": ["@khoralabs/obp-transport-http2@workspace:packages/transport-http2/impl/ts"],
+
+    "@khoralabs/obp-transport-http2-spec": ["@khoralabs/obp-transport-http2-spec@workspace:packages/transport-http2/spec"],
 
     "@khoralabs/obp-transport-ws": ["@khoralabs/obp-transport-ws@workspace:packages/transport-ws/impl/ts"],
 

@@ -47,8 +47,11 @@ structure UpsertChannelAdmissionInput {
     admission: ChannelAdmission
 }
 
-structure UpsertChannelAdmissionOutput {
-    @documentation("Empty success.")
+structure UpsertChannelAdmissionOutput {}
+
+operation UpsertChannelAdmission {
+    input: UpsertChannelAdmissionInput
+    output: UpsertChannelAdmissionOutput
 }
 
 structure GetActiveChannelAdmissionSecretInput {
@@ -65,6 +68,11 @@ structure GetActiveChannelAdmissionSecretOutput {
     result: GetActiveChannelAdmissionSecretResult
 }
 
+operation GetActiveChannelAdmissionSecret {
+    input: GetActiveChannelAdmissionSecretInput
+    output: GetActiveChannelAdmissionSecretOutput
+}
+
 structure EnqueueRelayedFrameInput {
     channel_id: String
     bytes: Blob
@@ -72,6 +80,11 @@ structure EnqueueRelayedFrameInput {
 
 structure EnqueueRelayedFrameOutput {
     frame_id: Long
+}
+
+operation EnqueueRelayedFrame {
+    input: EnqueueRelayedFrameInput
+    output: EnqueueRelayedFrameOutput
 }
 
 structure ListRelayedFramesAfterInput {
@@ -83,20 +96,31 @@ structure ListRelayedFramesAfterOutput {
     frames: RelayedFrameList
 }
 
+operation ListRelayedFramesAfter {
+    input: ListRelayedFramesAfterInput
+    output: ListRelayedFramesAfterOutput
+}
+
 structure PurgeRelayedFramesForChannelInput {
     channel_id: String
 }
 
-structure PurgeRelayedFramesForChannelOutput {
-    @documentation("Empty success.")
+structure PurgeRelayedFramesForChannelOutput {}
+
+operation PurgeRelayedFramesForChannel {
+    input: PurgeRelayedFramesForChannelInput
+    output: PurgeRelayedFramesForChannelOutput
 }
 
 structure DeleteChannelAdmissionInput {
     channel_id: String
 }
 
-structure DeleteChannelAdmissionOutput {
-    @documentation("Empty success.")
+structure DeleteChannelAdmissionOutput {}
+
+operation DeleteChannelAdmission {
+    input: DeleteChannelAdmissionInput
+    output: DeleteChannelAdmissionOutput
 }
 
 structure PurgeExpiredChannelsInput {
@@ -105,4 +129,9 @@ structure PurgeExpiredChannelsInput {
 
 structure PurgeExpiredChannelsOutput {
     channels_purged: Integer
+}
+
+operation PurgeExpiredChannels {
+    input: PurgeExpiredChannelsInput
+    output: PurgeExpiredChannelsOutput
 }
