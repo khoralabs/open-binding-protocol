@@ -48,6 +48,7 @@ service ObpPersistence {
         GetOffer
         GetPort
         GetPortBindPolicy
+        GetPortExposePolicy
         ExtendOffer
         ExposePort
         BindPort
@@ -156,6 +157,33 @@ structure GetPortBindPolicyOutput {
     result: GetPortBindPolicyResult
 }
 
+/// Read NBC expose-time policy persisted on the port row (SQLite columns on **`obp_ports`**).
+operation GetPortExposePolicy {
+    input: GetPortExposePolicyInput
+    output: GetPortExposePolicyOutput
+}
+
+structure GetPortExposePolicyInput {
+    portId: String
+}
+
+structure PortExposePolicyFound {
+    max_bindings: Integer = 1
+    terminal: Boolean = false
+    ttl_basis: String = null
+    ttl_measure: Integer = null
+    expose_seq: Integer = null
+}
+
+union GetPortExposePolicyResult {
+    notFound: Unit
+    found: PortExposePolicyFound
+}
+
+structure GetPortExposePolicyOutput {
+    result: GetPortExposePolicyResult
+}
+
 /// Create an offer, add Party -[EXTENDS]-> Offer, and optionally Offer -[BINDS]-> Port.
 /// Implementations MUST assign **`Offer.id`** and MAY ignore client-supplied **`id`** on the input **`offer`** if they require placeholders in the wire format. Row **`created_seq`** for persisted rows follows **`khora.obp.nbc#NbcRowCommitMeta`** when tracked.
 operation ExtendOffer {
@@ -200,6 +228,18 @@ structure ExposePortInput {
     nbc_expires_at_relay_ms: Long
     /// NBC expose-time bind policy snapshot persisted on the port row (ledger-visible). **`null`** when inactive.
     bind_policy: Document = null
+    /// NBC N2 maximum successful binds after ref resolution. Default **1** when omitted.
+    @default(1)
+    max_bindings: Integer
+    /// NBC orchestration hint; default **false** when omitted.
+    @default(false)
+    terminal: Boolean
+    /// NBC TTL basis when set; **`null`** when unset.
+    ttl_basis: String = null
+    /// NBC TTL measure when set; **`null`** when unset.
+    ttl_measure: Integer = null
+    /// Coordinator turn / ledger tick at expose; **`null`** when unset.
+    expose_seq: Integer = null
 }
 
 structure ExposePortOutput {

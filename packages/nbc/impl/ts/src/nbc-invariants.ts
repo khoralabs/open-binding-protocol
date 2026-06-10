@@ -1,11 +1,11 @@
 /**
- * Bilateral NBC bind-time checks: N1 (expiry), N3 (ref chain), N4 (bind policy).
- * No **`max_bindings`** / contention logic.
+ * Bilateral NBC bind-time checks: N1 (expiry), N2/N5 (`max_bindings` tally), N3 (ref chain), N4 (bind policy).
+ * Store-layer atomic enforcement is N6 (`bindPort` / `extendOffer` in persistence strategies).
  */
 
 import { ObpError } from "@khoralabs/obp-errors";
 import type { JsonDocument, Offer, Port } from "@khoralabs/obp-model";
-import type { ObpNbcBindWindow } from "@khoralabs/obp-persistence";
+import { countBindsForCanonicalPort, type ObpNbcBindWindow } from "@khoralabs/obp-persistence";
 import { resolveCanonicalPortId } from "./nbc-ref";
 
 export type NbcBindFailure =
@@ -13,6 +13,7 @@ export type NbcBindFailure =
   | { code: "NOT_EXPOSED" }
   | { code: "REF_CYCLE"; path: readonly string[] }
   | { code: "REF_MISSING"; missingId: string }
+  | { code: "MAX_BINDINGS_EXCEEDED"; canonicalPortId: string; max_bindings: number }
   | { code: "POLICY_REJECTED"; reason: string };
 
 export type NbcBindTiming = {
@@ -45,6 +46,10 @@ export type ValidateNbcBindInput = {
   bindPayload: JsonDocument | null;
   /** Required when {@link bindPolicy} is active (non-empty object). */
   validateBindPayload?: NbcBindPolicyValidateFn | undefined;
+  /** Existing **BINDS** rows for canonical tally (N2/N5). */
+  existingBinds: readonly { portId: string }[];
+  /** Effective **`NbcPortExposePolicy.max_bindings`** on the canonical port row. */
+  max_bindings: number;
 };
 
 export type ValidateNbcBindResult =
@@ -139,6 +144,19 @@ export async function validateNbcBind(input: ValidateNbcBindInput): Promise<Vali
     return {
       ok: false,
       failure: { code: "REF_MISSING", missingId: canonicalId },
+    };
+  }
+
+  const { existingBinds, max_bindings } = input;
+  const bindCount = countBindsForCanonicalPort(existingBinds, portsById, canonicalId);
+  if (bindCount >= max_bindings) {
+    return {
+      ok: false,
+      failure: {
+        code: "MAX_BINDINGS_EXCEEDED",
+        canonicalPortId: canonicalId,
+        max_bindings,
+      },
     };
   }
 

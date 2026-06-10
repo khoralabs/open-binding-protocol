@@ -1,5 +1,6 @@
 import { Database } from "bun:sqlite";
 import { describe, expect, test } from "bun:test";
+import { ObpError } from "@khoralabs/obp-errors";
 import { initObpSchema } from "./connection";
 import { createObpSqlitePersistenceClient } from "./index";
 
@@ -67,6 +68,103 @@ describe("SqliteObpPersistenceStrategy", () => {
     expect(pr.result.kind).toBe("found");
     if (pr.result.kind === "found") {
       expect(pr.result.bind_policy).toEqual(policy);
+    }
+  });
+
+  test("exposePort persists max_bindings default 1", async () => {
+    const client = makeClient();
+    const { party } = await client.registerParty({ name: "Erin" });
+    const { offer } = await client.extendOffer({
+      partyId: party.id,
+      offer: { id: "", type: "step" },
+      bindPortId: "",
+      bind_payload: null,
+    });
+    const { port } = await client.exposePort({
+      offerId: offer.id,
+      port: { id: "", type: "slot", promise: "p", ref: "" },
+    });
+    const pr = await client.getPortExposePolicy({ portId: port.id });
+    expect(pr.result.kind).toBe("found");
+    if (pr.result.kind === "found") {
+      expect(pr.result.policy.max_bindings).toBe(1);
+    }
+  });
+
+  test("N5 multi-expose shares one max_bindings tally", async () => {
+    const client = makeClient();
+    const { party } = await client.registerParty({ name: "Frank" });
+    const { offer: offerA } = await client.extendOffer({
+      partyId: party.id,
+      offer: { id: "", type: "a" },
+      bindPortId: "",
+      bind_payload: null,
+    });
+    const { offer: offerB } = await client.extendOffer({
+      partyId: party.id,
+      offer: { id: "", type: "b" },
+      bindPortId: "",
+      bind_payload: null,
+    });
+    const { port } = await client.exposePort({
+      offerId: offerA.id,
+      port: { id: "shared", type: "slot", promise: "p", ref: "" },
+      max_bindings: 1,
+    });
+    await client.exposePort({
+      offerId: offerB.id,
+      port: { id: "shared", type: "slot", promise: "p", ref: "" },
+    });
+    await client.bindPort({
+      offerId: offerA.id,
+      portId: port.id,
+      bind_payload: null,
+    });
+    await expect(
+      client.bindPort({
+        offerId: offerB.id,
+        portId: port.id,
+        bind_payload: null,
+      }),
+    ).rejects.toThrow(ObpError);
+  });
+
+  test("N6 concurrent binds allow at most one success", async () => {
+    const client = makeClient();
+    const { party } = await client.registerParty({ name: "Gina" });
+    const { offer: offerA } = await client.extendOffer({
+      partyId: party.id,
+      offer: { id: "", type: "a" },
+      bindPortId: "",
+      bind_payload: null,
+    });
+    const { offer: offerB } = await client.extendOffer({
+      partyId: party.id,
+      offer: { id: "", type: "b" },
+      bindPortId: "",
+      bind_payload: null,
+    });
+    const { port } = await client.exposePort({
+      offerId: offerA.id,
+      port: { id: "cap-port", type: "slot", promise: "p", ref: "" },
+      max_bindings: 1,
+    });
+    await client.exposePort({
+      offerId: offerB.id,
+      port: { id: "cap-port", type: "slot", promise: "p", ref: "" },
+    });
+
+    const results = await Promise.allSettled([
+      client.bindPort({ offerId: offerA.id, portId: port.id, bind_payload: null }),
+      client.bindPort({ offerId: offerB.id, portId: port.id, bind_payload: null }),
+    ]);
+    const fulfilled = results.filter((r) => r.status === "fulfilled");
+    const rejected = results.filter((r) => r.status === "rejected");
+    expect(fulfilled.length).toBe(1);
+    expect(rejected.length).toBe(1);
+    if (rejected[0]?.status === "rejected") {
+      expect(rejected[0].reason).toBeInstanceOf(ObpError);
+      expect((rejected[0].reason as ObpError).code).toBe("MAX_BINDINGS");
     }
   });
 

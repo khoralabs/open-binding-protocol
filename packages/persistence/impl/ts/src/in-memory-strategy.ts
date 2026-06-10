@@ -1,4 +1,7 @@
+import { ObpError } from "@khoralabs/obp-errors";
 import type { JsonDocument, Offer, Party, Port } from "@khoralabs/obp-model";
+import { assertCanonicalBindCapacity, normalizeMaxBindings } from "./bind-capacity";
+import { resolveCanonicalPortId } from "./canonical-port-ref";
 import { ObpPersistenceClient } from "./persistence-client";
 import type { ObpPersistenceStrategy } from "./persistence-strategy";
 import type {
@@ -22,6 +25,8 @@ import type {
   GetPartyOutput,
   GetPortBindPolicyInput,
   GetPortBindPolicyOutput,
+  GetPortExposePolicyInput,
+  GetPortExposePolicyOutput,
   GetPortInput,
   GetPortOutput,
   GetPortsSnapshotInput,
@@ -32,6 +37,7 @@ import type {
   ListBindsOutput,
   ListExposedPortEdgesInput,
   ListExposedPortEdgesOutput,
+  ObpPortExposePolicy,
   RegisterPartyInput,
   RegisterPartyOutput,
   SetOfferExpiredNowInput,
@@ -54,13 +60,22 @@ export class InMemoryObpPersistenceStrategy implements ObpPersistenceStrategy {
     { nbc_expires_turn: number; nbc_expires_at_relay_ms: number }
   >();
   private extends = new Map<string, string>();
-  private exposes = new Map<string, string>();
+  private exposes: ExposedPortEdge[] = [];
   /** NBC expose-time bind_policy snapshot per port id (`null` when inactive). */
   private portBindPolicies = new Map<string, JsonDocument>();
+  private portExposePolicies = new Map<string, ObpPortExposePolicy>();
   private binds: BindListingRow[] = [];
   private seq = 0n;
   private nextId(): string {
     return `id-${++this.seq}`;
+  }
+
+  private loadMaxBindingsMap(): Map<string, number> {
+    const m = new Map<string, number>();
+    for (const [portId, policy] of this.portExposePolicies) {
+      m.set(portId, policy.max_bindings);
+    }
+    return m;
   }
 
   async registerParty(input: RegisterPartyInput): Promise<RegisterPartyOutput> {
@@ -94,6 +109,12 @@ export class InMemoryObpPersistenceStrategy implements ObpPersistenceStrategy {
     };
   }
 
+  async getPortExposePolicy(input: GetPortExposePolicyInput): Promise<GetPortExposePolicyOutput> {
+    const policy = this.portExposePolicies.get(input.portId);
+    if (!policy) return { result: { kind: "notFound" } };
+    return { result: { kind: "found", policy } };
+  }
+
   async extendOffer(input: ExtendOfferInput): Promise<ExtendOfferOutput> {
     const offer: Offer = { ...input.offer, id: this.nextId() };
     this.offers.set(offer.id, offer);
@@ -104,10 +125,17 @@ export class InMemoryObpPersistenceStrategy implements ObpPersistenceStrategy {
       nbc_expires_turn: nt,
       nbc_expires_at_relay_ms: nm,
     });
-    if (input.bindPortId.trim() !== "") {
+    const bindPortId = input.bindPortId.trim();
+    if (bindPortId !== "") {
+      assertCanonicalBindCapacity({
+        targetPortId: bindPortId,
+        portsById: this.ports,
+        maxBindingsByPortId: this.loadMaxBindingsMap(),
+        binds: this.binds,
+      });
       this.binds.push({
         offerId: offer.id,
-        portId: input.bindPortId,
+        portId: bindPortId,
         bind_payload: input.bind_payload,
       });
     }
@@ -115,10 +143,43 @@ export class InMemoryObpPersistenceStrategy implements ObpPersistenceStrategy {
   }
 
   async exposePort(input: ExposePortInput): Promise<ExposePortOutput> {
-    const port: Port = { ...input.port, id: this.nextId() };
+    if (!this.offers.has(input.offerId)) {
+      throw new ObpError("NOT_FOUND", `Offer not found: ${input.offerId}`);
+    }
+
+    const portId = input.port.id.trim() !== "" ? input.port.id : this.nextId();
+    const port: Port = { ...input.port, id: portId };
+    const existing = this.ports.get(portId);
+
+    if (existing) {
+      this.exposes.push({ offerId: input.offerId, portId });
+      return { port: existing };
+    }
+
+    const map = new Map(this.ports);
+    map.set(port.id, port);
+    const refTrim = port.ref.trim();
+    if (refTrim !== "" && !map.has(refTrim)) {
+      throw new ObpError("REF_MISSING", `Port ref target not found: ${refTrim}`);
+    }
+    const resolved = resolveCanonicalPortId(map, port.id);
+    if (!resolved.ok) {
+      if (resolved.reason === "cycle") {
+        throw new ObpError("REF_CYCLE", `Port ref cycle: ${resolved.path.join(" -> ")}`);
+      }
+      throw new ObpError("REF_MISSING", `Missing port in ref chain: ${resolved.missingId}`);
+    }
+
     this.ports.set(port.id, port);
     this.portBindPolicies.set(port.id, input.bind_policy ?? null);
-    this.exposes.set(port.id, input.offerId);
+    this.portExposePolicies.set(port.id, {
+      max_bindings: normalizeMaxBindings(input.max_bindings),
+      terminal: input.terminal ?? false,
+      ttl_basis: input.ttl_basis ?? null,
+      ttl_measure: input.ttl_measure ?? null,
+      expose_seq: input.expose_seq ?? null,
+    });
+    this.exposes.push({ offerId: input.offerId, portId: port.id });
     const nt = input.nbc_expires_turn ?? 0;
     const nm = input.nbc_expires_at_relay_ms ?? 0;
     this.portNbc.set(port.id, {
@@ -129,6 +190,12 @@ export class InMemoryObpPersistenceStrategy implements ObpPersistenceStrategy {
   }
 
   async bindPort(input: BindPortInput): Promise<BindPortOutput> {
+    assertCanonicalBindCapacity({
+      targetPortId: input.portId,
+      portsById: this.ports,
+      maxBindingsByPortId: this.loadMaxBindingsMap(),
+      binds: this.binds,
+    });
     this.binds.push({
       offerId: input.offerId,
       portId: input.portId,
@@ -140,15 +207,13 @@ export class InMemoryObpPersistenceStrategy implements ObpPersistenceStrategy {
   async listExposedPortEdges(
     _input: ListExposedPortEdgesInput,
   ): Promise<ListExposedPortEdgesOutput> {
-    const edges: ExposedPortEdge[] = [];
-    for (const [portId, offerId] of this.exposes) {
-      edges.push({ offerId, portId });
-    }
-    return { edges };
+    return { edges: [...this.exposes] };
   }
 
   async isPortExposed(input: IsPortExposedInput): Promise<IsPortExposedOutput> {
-    return { exposed: this.exposes.has(input.portId) };
+    return {
+      exposed: this.exposes.some((e) => e.portId === input.portId),
+    };
   }
 
   async listBinds(_input: ListBindsInput): Promise<ListBindsOutput> {
@@ -207,10 +272,10 @@ export class InMemoryObpPersistenceStrategy implements ObpPersistenceStrategy {
         nbc_expires_at_relay_ms: 1,
       });
     }
-    for (const [portId, offerId] of this.exposes) {
-      if (offerId !== input.offerId) continue;
-      if (this.ports.has(portId)) {
-        this.portNbc.set(portId, {
+    for (const edge of this.exposes) {
+      if (edge.offerId !== input.offerId) continue;
+      if (this.ports.has(edge.portId)) {
+        this.portNbc.set(edge.portId, {
           nbc_expires_turn: 0,
           nbc_expires_at_relay_ms: 1,
         });

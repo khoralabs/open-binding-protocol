@@ -29,7 +29,7 @@ A stack may be OBP-conformant without NBC. NBC is a named additive conformance l
 | `@khoralabs/obp-model` | `khora.obp` graph vocabulary: `Party`, `Offer`, `Port`, edges |
 | `@khoralabs/obp-persistence` | `ObpPersistenceStrategy` adapter interface + `ObpPersistenceClient` |
 | `@khoralabs/obp-sqlite-persistence` | SQLite reference persistence strategy |
-| `@khoralabs/obp-nbc` | NBC bind-time checks (N1–N4), `applyNbcTurn`, session helpers |
+| `@khoralabs/obp-nbc` | NBC bind-time checks (N1–N6), `applyNbcTurn`, session helpers |
 | `@khoralabs/nbc-bind-policy` | JSON Schema (draft 2020-12) + AJV validation for NBC bind payloads |
 | `@khoralabs/obp-frames-impl` | `khora.obp.frame` wire types, canonical JSON, signing, length-prefix framing |
 | `@khoralabs/obp-session-impl` | Session Merkle checkpoints, `SessionEnvelope` verification |

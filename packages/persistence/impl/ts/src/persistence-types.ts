@@ -49,6 +49,22 @@ export type GetPortBindPolicyResult =
 export type GetPortBindPolicyInput = { portId: string };
 export type GetPortBindPolicyOutput = { result: GetPortBindPolicyResult };
 
+/** NBC expose-time policy persisted on the port row (`khora.obp.nbc#NbcPortExposePolicy`). */
+export type ObpPortExposePolicy = {
+  max_bindings: number;
+  terminal: boolean;
+  ttl_basis: string | null;
+  ttl_measure: number | null;
+  expose_seq: number | null;
+};
+
+export type GetPortExposePolicyResult =
+  | { readonly kind: "notFound" }
+  | { readonly kind: "found"; policy: ObpPortExposePolicy };
+
+export type GetPortExposePolicyInput = { portId: string };
+export type GetPortExposePolicyOutput = { result: GetPortExposePolicyResult };
+
 // ---------------------------------------------------------------------------
 // ExtendOffer
 // ---------------------------------------------------------------------------
@@ -81,6 +97,16 @@ export type ExposePortInput = {
   nbc_expires_at_relay_ms?: number;
   /** NBC expose-time bind policy persisted on port row; `null` when inactive. */
   bind_policy?: JsonDocument;
+  /** NBC N2 bind capacity; default **1** when omitted. */
+  max_bindings?: number;
+  /** NBC orchestration hint; default **false** when omitted. */
+  terminal?: boolean;
+  /** NBC TTL basis when set; `null` when unset. */
+  ttl_basis?: string | null;
+  /** NBC TTL measure when set; `null` when unset. */
+  ttl_measure?: number | null;
+  /** Coordinator turn / ledger tick at expose; `null` when unset. */
+  expose_seq?: number | null;
 };
 
 export type ExposePortOutput = {

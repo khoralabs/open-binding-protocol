@@ -31,6 +31,11 @@ const win = (turn: number, relay: number) => ({
   nbc_expires_at_relay_ms: relay,
 });
 
+const bindCap = {
+  existingBinds: [] as { portId: string }[],
+  max_bindings: 1,
+};
+
 describe("resolveCanonicalPortId", () => {
   test("resolves empty ref", () => {
     const p: Port = {
@@ -91,6 +96,7 @@ describe("validateNbcBind", () => {
       targetPortIsExposed: true,
       bindPolicy: null,
       bindPayload: null,
+      ...bindCap,
     });
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.failure).toEqual({ code: "EXPIRED", entity: "offer" });
@@ -107,6 +113,7 @@ describe("validateNbcBind", () => {
       targetPortIsExposed: true,
       bindPolicy: null,
       bindPayload: null,
+      ...bindCap,
     });
     expect(r.ok).toBe(true);
     if (r.ok) expect(r.normalizedBindPayload).toBeNull();
@@ -123,6 +130,7 @@ describe("validateNbcBind", () => {
       targetPortIsExposed: true,
       bindPolicy: null,
       bindPayload: null,
+      ...bindCap,
     });
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.failure).toEqual({ code: "EXPIRED", entity: "offer" });
@@ -139,9 +147,58 @@ describe("validateNbcBind", () => {
       targetPortIsExposed: false,
       bindPolicy: null,
       bindPayload: null,
+      ...bindCap,
     });
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.failure).toEqual({ code: "NOT_EXPOSED" });
+  });
+
+  test("N2 rejects when canonical bind cap reached", async () => {
+    const r = await validateNbcBind({
+      timing: { turnSeq: 0, relayTsMs: 1 },
+      offer,
+      port,
+      offerBindWindow: win(100, 0),
+      portBindWindow: win(100, 0),
+      portsById: ports,
+      targetPortIsExposed: true,
+      bindPolicy: null,
+      bindPayload: null,
+      existingBinds: [{ portId: "p1" }],
+      max_bindings: 1,
+    });
+    expect(r.ok).toBe(false);
+    if (!r.ok) {
+      expect(r.failure).toEqual({
+        code: "MAX_BINDINGS_EXCEEDED",
+        canonicalPortId: "p1",
+        max_bindings: 1,
+      });
+    }
+  });
+
+  test("N2 counts ref alias toward canonical cap", async () => {
+    const canonical: Port = { id: "a", type: "t", promise: "", ref: "" };
+    const alias: Port = { id: "b", type: "t", promise: "", ref: "a" };
+    const aliasPorts = new Map<string, Port>([
+      ["a", canonical],
+      ["b", alias],
+    ]);
+    const r = await validateNbcBind({
+      timing: { turnSeq: 0, relayTsMs: 1 },
+      offer,
+      port: alias,
+      offerBindWindow: win(100, 0),
+      portBindWindow: win(100, 0),
+      portsById: aliasPorts,
+      targetPortIsExposed: true,
+      bindPolicy: null,
+      bindPayload: null,
+      existingBinds: [{ portId: "b" }],
+      max_bindings: 1,
+    });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.failure.code).toBe("MAX_BINDINGS_EXCEEDED");
   });
 
   test("N4 rejects bind_payload when no policy", async () => {
@@ -155,6 +212,7 @@ describe("validateNbcBind", () => {
       targetPortIsExposed: true,
       bindPolicy: null,
       bindPayload: { x: 1 },
+      ...bindCap,
     });
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.failure.code).toBe("POLICY_REJECTED");
@@ -172,6 +230,7 @@ describe("validateNbcBind", () => {
       bindPolicy: { required: true },
       bindPayload: { ok: true },
       validateBindPayload: nbcBindValidate,
+      ...bindCap,
     });
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.failure.code).toBe("POLICY_REJECTED");
@@ -188,6 +247,7 @@ describe("validateNbcBind", () => {
       targetPortIsExposed: true,
       bindPolicy: textBindSchema,
       bindPayload: { greeting: "yo" },
+      ...bindCap,
     });
     expect(r.ok).toBe(false);
     if (!r.ok) {
@@ -210,6 +270,7 @@ describe("validateNbcBind", () => {
       bindPolicy: textBindSchema,
       bindPayload: { greeting: "yo" },
       validateBindPayload: nbcBindValidate,
+      ...bindCap,
     });
     expect(r.ok).toBe(true);
     if (r.ok) expect(r.normalizedBindPayload).toEqual({ greeting: "yo" });
@@ -227,6 +288,7 @@ describe("validateNbcBind", () => {
       bindPolicy: textBindSchema,
       bindPayload: {},
       validateBindPayload: nbcBindValidate,
+      ...bindCap,
     });
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.failure.code).toBe("POLICY_REJECTED");

@@ -1,4 +1,11 @@
 export {
+  assertCanonicalBindCapacity,
+  countBindsForCanonicalPort,
+  DEFAULT_MAX_BINDINGS,
+  normalizeMaxBindings,
+} from "./bind-capacity";
+export { type ResolvePortRefResult, resolveCanonicalPortId } from "./canonical-port-ref";
+export {
   createInMemoryObpPersistenceClient,
   InMemoryObpPersistenceStrategy,
 } from "./in-memory-strategy";
@@ -31,6 +38,9 @@ export type {
   GetPortBindPolicyInput,
   GetPortBindPolicyOutput,
   GetPortBindPolicyResult,
+  GetPortExposePolicyInput,
+  GetPortExposePolicyOutput,
+  GetPortExposePolicyResult,
   GetPortInput,
   GetPortOutput,
   GetPortResult,
@@ -43,6 +53,7 @@ export type {
   ListExposedPortEdgesInput,
   ListExposedPortEdgesOutput,
   ObpNbcBindWindow,
+  ObpPortExposePolicy,
   PortSnapshotEntry,
   PortSnapshotEntryList,
   RegisterPartyInput,

@@ -7,9 +7,9 @@ use smithy.api#Document
 @documentation("""
 **Bilateral NBC turn payload** — JSON shape carried in **`khora.obp.frame#Frame.body`** for negotiation TURN frames when peers use the Negotiated Binding Convention in a **private two-party** session.
 
-This is **not** a public-market / multi-consumer profile: there is no bind-capacity tally, no concurrent-bind atomicity requirement, and no `terminal` hint on the port spec. Session completion is **emergent**: when neither peer exposes further bindable affordances, no further coordination is possible.
+Optional **`max_bindings`** and **`terminal`** on **`NbcPortSpec`** map to **`khora.obp.nbc#NbcPortExposePolicy`** at expose (defaults **1** / **false** when omitted). Store-layer enforcement of caps under concurrency is NBC **N6** (`ObpPersistence.bindPort`).
 
-See **`khora.obp.nbc#NegotiatedBindingConvention`** for normative NBC rules that apply here (N1 expiry, N3 ref resolution, N4 bind policy when present).
+See **`khora.obp.nbc#NegotiatedBindingConvention`** for normative NBC rules (N1 expiry, N2/N5 capacity, N3 ref resolution, N4 bind policy when present).
 """)
 structure NbcOfferSpec {
     /// Client placeholder; persistence assigns the canonical **`khora.obp#Offer.id`**.
@@ -37,6 +37,10 @@ structure NbcPortSpec {
     /// When non-empty, aliases another port id for bind resolution (maps to **`khora.obp#Port.ref`**); implementations MUST detect cycles.
     @default("")
     ref: String
+    /// NBC N2 maximum successful binds after ref resolution. Omitted means **1** when this structure is present on the wire.
+    max_bindings: Integer = 1
+    /// NBC orchestration hint; omitted means **false**.
+    terminal: Boolean = false
 }
 
 list NbcPortSpecList {

@@ -25,6 +25,10 @@ export type NbcPortSpec = {
   expires_at_relay_ms: number;
   bind_policy: JsonDocument | null;
   ref: string;
+  /** NBC N2 bind capacity; omitted on wire defaults to **1** at expose. */
+  max_bindings?: number;
+  /** NBC orchestration hint; omitted on wire defaults to **false**. */
+  terminal?: boolean;
 };
 
 /** Canonical `Frame.body` for bilateral NBC TURN frames. */
@@ -90,6 +94,17 @@ function parseNbcPortSpec(v: unknown): NbcPortSpec {
     if (bp === undefined || bp === null) bind_policy = null;
     else bind_policy = bp as JsonDocument;
   }
+  let max_bindings: number | undefined;
+  if ("max_bindings" in v && v.max_bindings !== undefined && v.max_bindings !== null) {
+    max_bindings = toNonnegInt(v.max_bindings, "NbcPortSpec.max_bindings");
+    if (max_bindings < 1) {
+      throw new TypeError("NbcPortSpec.max_bindings: expected positive integer (>= 1)");
+    }
+  }
+  let terminal: boolean | undefined;
+  if ("terminal" in v && v.terminal !== undefined && v.terminal !== null) {
+    terminal = Boolean(v.terminal);
+  }
   return {
     id,
     type,
@@ -98,6 +113,8 @@ function parseNbcPortSpec(v: unknown): NbcPortSpec {
     expires_at_relay_ms,
     bind_policy,
     ref,
+    ...(max_bindings !== undefined ? { max_bindings } : {}),
+    ...(terminal !== undefined ? { terminal } : {}),
   };
 }
 

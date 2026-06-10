@@ -12,6 +12,7 @@ import {
   type NbcBindTiming,
   validateNbcBind,
 } from "./nbc-invariants";
+import { resolveCanonicalPortId } from "./nbc-ref";
 import { type NbcTurnBody, nbcPortSpecToPort } from "./nbc-types";
 
 export type ApplyNbcTurnParams = {
@@ -42,6 +43,11 @@ export function obpErrorFromBindFailure(f: NbcBindFailure): ObpError {
       return new ObpError("REF_MISSING", `port ref missing: ${f.missingId}`);
     case "POLICY_REJECTED":
       return new ObpError("VALIDATION", f.reason);
+    case "MAX_BINDINGS_EXCEEDED":
+      return new ObpError(
+        "MAX_BINDINGS",
+        `max_bindings (${f.max_bindings}) exceeded for canonical port ${f.canonicalPortId}`,
+      );
     default: {
       const _exhaustive: never = f;
       return _exhaustive;
@@ -78,6 +84,8 @@ export async function applyNbcTurn(params: ApplyNbcTurnParams): Promise<ApplyNbc
       nbc_expires_turn: spec.expires_turn,
       nbc_expires_at_relay_ms: spec.expires_at_relay_ms,
       bind_policy: spec.bind_policy ?? null,
+      max_bindings: spec.max_bindings,
+      terminal: spec.terminal,
     });
     exposedPortIds.push(port.id);
     if (isActiveBindPolicy(spec.bind_policy)) {
@@ -124,6 +132,26 @@ export async function applyNbcTurn(params: ApplyNbcTurnParams): Promise<ApplyNbc
       bindPolicy = pr.result.bind_policy;
     }
 
+    const resolved = resolveCanonicalPortId(portsById, body.bind_port_id);
+    if (!resolved.ok) {
+      throw obpErrorFromBindFailure(
+        resolved.reason === "cycle"
+          ? { code: "REF_CYCLE", path: resolved.path }
+          : { code: "REF_MISSING", missingId: resolved.missingId },
+      );
+    }
+
+    const [{ binds }, exposePolicyRes] = await Promise.all([
+      client.listBinds(),
+      client.getPortExposePolicy({ portId: resolved.canonicalId }),
+    ]);
+    if (exposePolicyRes.result.kind !== "found") {
+      throw new ObpError(
+        "NOT_FOUND",
+        `expose policy missing for canonical port: ${resolved.canonicalId}`,
+      );
+    }
+
     const bindResult = await validateNbcBind({
       timing,
       offer: offerNow,
@@ -135,6 +163,8 @@ export async function applyNbcTurn(params: ApplyNbcTurnParams): Promise<ApplyNbc
       bindPolicy,
       bindPayload: body.bind_payload,
       validateBindPayload,
+      existingBinds: binds,
+      max_bindings: exposePolicyRes.result.policy.max_bindings,
     });
     if (!bindResult.ok) {
       throw obpErrorFromBindFailure(bindResult.failure);

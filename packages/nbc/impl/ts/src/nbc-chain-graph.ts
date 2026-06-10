@@ -1,5 +1,5 @@
 import type { JsonDocument } from "@khoralabs/obp-model";
-import type { ObpPersistenceClient } from "@khoralabs/obp-persistence";
+import { countBindsForCanonicalPort, type ObpPersistenceClient } from "@khoralabs/obp-persistence";
 import type {
   NbcChainExposeEdge,
   NbcChainExtendEdge,
@@ -14,6 +14,7 @@ import {
   isTurnExpiryOk,
   type NbcBindTiming,
 } from "./nbc-invariants";
+import { resolveCanonicalPortId } from "./nbc-ref";
 
 export type CollectNbcChainGraphOptions = {
   /** When set, **`expired`** flags use NBC N1 against this timing. */
@@ -103,10 +104,7 @@ export async function collectNbcChainGraph(
   const offers: NbcChainOfferRow[] = offerRows.filter((row) => row !== null);
   offers.sort((a, b) => a.id.localeCompare(b.id));
 
-  const bindCountByPort = new Map<string, number>();
-  for (const b of binds) {
-    bindCountByPort.set(b.portId, (bindCountByPort.get(b.portId) ?? 0) + 1);
-  }
+  const portsById = new Map(snapOut.entries.map((e) => [e.portId, e.port]));
 
   const exposedByPort = new Map<string, string[]>();
   for (const e of exposes) {
@@ -129,6 +127,10 @@ export async function collectNbcChainGraph(
       const expires_turn = win?.nbc_expires_turn ?? 0;
       const expires_at_relay_ms = win?.nbc_expires_at_relay_ms ?? 0;
       const expiryView = { expires_turn, expires_at_relay_ms };
+      const resolved = resolveCanonicalPortId(portsById, portId);
+      const canonicalId = resolved.ok ? resolved.canonicalId : portId;
+      const bindCount = countBindsForCanonicalPort(binds, portsById, canonicalId);
+      const exposePolicyRes = await client.getPortExposePolicy({ portId: canonicalId });
       const row: NbcChainPortRow = {
         id: port.id,
         type: port.type,
@@ -137,9 +139,15 @@ export async function collectNbcChainGraph(
         expires_turn,
         expires_at_relay_ms,
         exposedOnOfferIds: Object.freeze([...(exposedByPort.get(portId) ?? [])]),
-        bindCount: bindCountByPort.get(portId) ?? 0,
+        bindCount,
         ...(timing !== undefined ? { expired: isNbcExpiryViewExpired(expiryView, timing) } : {}),
         bind_policy,
+        ...(exposePolicyRes.result.kind === "found"
+          ? {
+              max_bindings: exposePolicyRes.result.policy.max_bindings,
+              terminal: exposePolicyRes.result.policy.terminal,
+            }
+          : {}),
       };
       return row;
     }),

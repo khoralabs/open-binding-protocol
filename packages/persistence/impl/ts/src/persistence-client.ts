@@ -24,6 +24,8 @@ import type {
   GetPartyOutput,
   GetPortBindPolicyInput,
   GetPortBindPolicyOutput,
+  GetPortExposePolicyInput,
+  GetPortExposePolicyOutput,
   GetPortInput,
   GetPortOutput,
   GetPortsSnapshotOutput,
@@ -68,6 +70,10 @@ export class ObpPersistenceClient {
 
   getPortBindPolicy(input: GetPortBindPolicyInput): Promise<GetPortBindPolicyOutput> {
     return this.strategy.getPortBindPolicy(input);
+  }
+
+  getPortExposePolicy(input: GetPortExposePolicyInput): Promise<GetPortExposePolicyOutput> {
+    return this.strategy.getPortExposePolicy(input);
   }
 
   // -------------------------------------------------------------------------

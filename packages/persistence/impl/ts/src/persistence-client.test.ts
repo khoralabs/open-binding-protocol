@@ -77,6 +77,42 @@ describe("exposePort + isPortExposed", () => {
   });
 });
 
+describe("max_bindings enforcement", () => {
+  test("rejects second bind when cap is 1", async () => {
+    const client = makeClient();
+    const { party } = await client.registerParty({ name: "Cap" });
+    const { offer: offerA } = await client.extendOffer({
+      partyId: party.id,
+      offer: { id: "", type: "a" },
+      bindPortId: "",
+      bind_payload: null,
+    });
+    const { offer: offerB } = await client.extendOffer({
+      partyId: party.id,
+      offer: { id: "", type: "b" },
+      bindPortId: "",
+      bind_payload: null,
+    });
+    const { port } = await client.exposePort({
+      offerId: offerA.id,
+      port: { id: "p-cap", type: "slot", promise: "p", ref: "" },
+      max_bindings: 1,
+    });
+    await client.bindPort({
+      offerId: offerA.id,
+      portId: port.id,
+      bind_payload: null,
+    });
+    await expect(
+      client.bindPort({
+        offerId: offerB.id,
+        portId: port.id,
+        bind_payload: null,
+      }),
+    ).rejects.toMatchObject({ code: "MAX_BINDINGS" });
+  });
+});
+
 describe("bindPort + listBinds", () => {
   test("records bind row", async () => {
     const client = makeClient();

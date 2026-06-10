@@ -20,6 +20,8 @@ import type {
   GetPartyOutput,
   GetPortBindPolicyInput,
   GetPortBindPolicyOutput,
+  GetPortExposePolicyInput,
+  GetPortExposePolicyOutput,
   GetPortInput,
   GetPortOutput,
   GetPortsSnapshotInput,
@@ -37,6 +39,11 @@ import type {
   SetOfferExpiredNowOutput,
   SetPortExpiredNowInput,
   SetPortExpiredNowOutput,
+} from "@khoralabs/obp-persistence";
+import {
+  assertCanonicalBindCapacity,
+  normalizeMaxBindings,
+  resolveCanonicalPortId,
 } from "@khoralabs/obp-persistence";
 
 type PartyRow = {
@@ -92,6 +99,16 @@ function rowToPort(r: PortRow): Port {
   };
 }
 
+function rowToExposePolicy(r: PortRow) {
+  return {
+    max_bindings: r.max_bindings,
+    terminal: r.terminal === 1,
+    ttl_basis: r.ttl_basis,
+    ttl_measure: r.ttl_measure,
+    expose_seq: r.expose_seq,
+  };
+}
+
 function stringifyCounterpartyBind(payload: JsonDocument): string | null {
   if (payload === null) return null;
   return JSON.stringify(payload);
@@ -103,43 +120,6 @@ function parseJsonDocument(raw: string | null): JsonDocument {
     return JSON.parse(raw) as JsonDocument;
   } catch {
     return null;
-  }
-}
-
-/** Follow `Port.ref` until empty ref (canonical). Detects cycles and missing ids. */
-function resolveCanonicalPortId(
-  portsById: ReadonlyMap<string, Port>,
-  startPortId: string,
-):
-  | { ok: true }
-  | { ok: false; reason: "cycle"; path: readonly string[] }
-  | {
-      ok: false;
-      reason: "missing";
-      missingId: string;
-      path: readonly string[];
-    } {
-  const path: string[] = [];
-  const visited = new Set<string>();
-  let current = startPortId;
-
-  for (;;) {
-    if (visited.has(current)) {
-      return { ok: false, reason: "cycle", path };
-    }
-    visited.add(current);
-    path.push(current);
-
-    const port = portsById.get(current);
-    if (!port) {
-      return { ok: false, reason: "missing", missingId: current, path };
-    }
-
-    const next = port.ref.trim();
-    if (next === "") {
-      return { ok: true };
-    }
-    current = next;
   }
 }
 
@@ -242,6 +222,21 @@ export class SqliteObpPersistenceStrategy implements ObpPersistenceStrategy {
     };
   }
 
+  async getPortExposePolicy(input: GetPortExposePolicyInput): Promise<GetPortExposePolicyOutput> {
+    const row = this.db
+      .query<PortRow, [string]>(
+        `SELECT id, created_seq, nbc_expires_turn, nbc_expires_at_relay_ms, type, promise, max_bindings, terminal, ref, ttl_basis, ttl_measure, expose_seq, bind_policy_json FROM obp_ports WHERE id = ?`,
+      )
+      .get(input.portId);
+    if (!row) return { result: { kind: "notFound" } };
+    return {
+      result: {
+        kind: "found",
+        policy: rowToExposePolicy(row),
+      },
+    };
+  }
+
   async extendOffer(input: ExtendOfferInput): Promise<ExtendOfferOutput> {
     return this.db.transaction(() => {
       const partyExists = this.db
@@ -274,6 +269,7 @@ export class SqliteObpPersistenceStrategy implements ObpPersistenceStrategy {
         if (!portRow) {
           throw new ObpError("NOT_FOUND", `Port not found: ${bindPortId}`);
         }
+        this.assertBindCapacityInTxn(bindPortId);
         const bindEdge = crypto.randomUUID();
         const cbJson = stringifyCounterpartyBind(input.bind_payload);
         this.insertBind.run(bindEdge, offer.id, bindPortId, seq, cbJson);
@@ -299,6 +295,18 @@ export class SqliteObpPersistenceStrategy implements ObpPersistenceStrategy {
         id: portId,
       };
 
+      const existingRow = this.db
+        .query<PortRow, [string]>(
+          `SELECT id, created_seq, nbc_expires_turn, nbc_expires_at_relay_ms, type, promise, max_bindings, terminal, ref, ttl_basis, ttl_measure, expose_seq, bind_policy_json FROM obp_ports WHERE id = ?`,
+        )
+        .get(portId);
+
+      if (existingRow) {
+        const exId = crypto.randomUUID();
+        this.insertExpose.run(exId, input.offerId, portId, seq);
+        return { port: rowToPort(existingRow) };
+      }
+
       const map = this.loadPortsMap();
       map.set(port.id, port);
       const refTrim = port.ref.trim();
@@ -317,6 +325,8 @@ export class SqliteObpPersistenceStrategy implements ObpPersistenceStrategy {
       const nbcT = input.nbc_expires_turn ?? 0;
       const nbcM = input.nbc_expires_at_relay_ms ?? 0;
       const bindPolicyJson = stringifyCounterpartyBind(input.bind_policy ?? null);
+      const maxBindings = normalizeMaxBindings(input.max_bindings);
+      const terminal = (input.terminal ?? false) ? 1 : 0;
       this.insertPort.run(
         port.id,
         seq,
@@ -324,12 +334,12 @@ export class SqliteObpPersistenceStrategy implements ObpPersistenceStrategy {
         nbcM,
         port.type,
         port.promise,
-        0,
-        0,
+        maxBindings,
+        terminal,
         port.ref,
-        null,
-        null,
-        null,
+        input.ttl_basis ?? null,
+        input.ttl_measure ?? null,
+        input.expose_seq ?? null,
         bindPolicyJson,
       );
 
@@ -359,6 +369,8 @@ export class SqliteObpPersistenceStrategy implements ObpPersistenceStrategy {
       if (!portRow) {
         throw new ObpError("NOT_FOUND", `Port not found: ${input.portId}`);
       }
+
+      this.assertBindCapacityInTxn(input.portId);
 
       const seq = Date.now();
       const bindEdge = crypto.randomUUID();
@@ -494,6 +506,36 @@ export class SqliteObpPersistenceStrategy implements ObpPersistenceStrategy {
       this.updatePortsExpiresNowForOffer.run(0, 1, input.offerId);
     })();
     return {};
+  }
+
+  private assertBindCapacityInTxn(targetPortId: string): void {
+    const portsById = this.loadPortsMap();
+    const maxBindingsByPortId = this.loadMaxBindingsMap();
+    const binds = this.listBindsInTxn();
+    assertCanonicalBindCapacity({
+      targetPortId,
+      portsById,
+      maxBindingsByPortId,
+      binds,
+    });
+  }
+
+  private listBindsInTxn(): { offerId: string; portId: string }[] {
+    const rows = this.db
+      .query<{ offer_id: string; port_id: string }, []>(`SELECT offer_id, port_id FROM obp_binds`)
+      .all();
+    return rows.map((r) => ({ offerId: r.offer_id, portId: r.port_id }));
+  }
+
+  private loadMaxBindingsMap(): Map<string, number> {
+    const rows = this.db
+      .query<{ id: string; max_bindings: number }, []>(`SELECT id, max_bindings FROM obp_ports`)
+      .all();
+    const m = new Map<string, number>();
+    for (const r of rows) {
+      m.set(r.id, r.max_bindings);
+    }
+    return m;
   }
 
   private loadPortsMap(): Map<string, Port> {
