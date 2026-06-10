@@ -1,6 +1,16 @@
+import {
+  DEFAULT_MAX_INBOUND_QUEUE_DEPTH,
+  enqueueInbound,
+  type InboundSide,
+  wakeInboundWaiters,
+} from "./bounded-inbound";
 import type { DuplexByteStream } from "./duplex-byte-stream";
 
 export type WebSocketDuplexByteSend = (bytes: Uint8Array) => void | Promise<void>;
+
+export type WebSocketDuplexByteStreamOptions = {
+  maxInboundQueueDepth?: number;
+};
 
 function toUint8Array(data: Uint8Array | ArrayBuffer): Uint8Array {
   return data instanceof Uint8Array ? data : new Uint8Array(data);
@@ -10,19 +20,24 @@ function toUint8Array(data: Uint8Array | ArrayBuffer): Uint8Array {
  * Bridge Bun/WebSocket-style callbacks to {@link DuplexByteStream}.
  * Pass the same `send` your socket uses for outgoing binary frames.
  */
-export function createWebSocketDuplexByteStream(send: WebSocketDuplexByteSend): {
+export function createWebSocketDuplexByteStream(
+  send: WebSocketDuplexByteSend,
+  options?: WebSocketDuplexByteStreamOptions,
+): {
   channel: DuplexByteStream;
   onMessage(data: Uint8Array | ArrayBuffer): void;
   onClose(): void;
 } {
-  type Side = { q: Uint8Array[]; w: Array<() => void> };
-  const incoming: Side = { q: [], w: [] };
+  const maxDepth = options?.maxInboundQueueDepth ?? DEFAULT_MAX_INBOUND_QUEUE_DEPTH;
+  const incoming: InboundSide = { q: [], w: [] };
   let done = false;
 
-  const wakeAll = (): void => {
-    for (const f of incoming.w.splice(0)) {
-      f();
+  const closeStream = (): void => {
+    if (done) {
+      return;
     }
+    done = true;
+    wakeInboundWaiters(incoming);
   };
 
   const channel: DuplexByteStream = {
@@ -51,11 +66,7 @@ export function createWebSocketDuplexByteStream(send: WebSocketDuplexByteSend): 
       await send(bytes);
     },
     async close() {
-      if (done) {
-        return;
-      }
-      done = true;
-      wakeAll();
+      closeStream();
     },
   };
 
@@ -65,15 +76,10 @@ export function createWebSocketDuplexByteStream(send: WebSocketDuplexByteSend): 
       if (done) {
         return;
       }
-      incoming.q.push(toUint8Array(data));
-      wakeAll();
+      enqueueInbound(incoming, toUint8Array(data), maxDepth, closeStream);
     },
     onClose() {
-      if (done) {
-        return;
-      }
-      done = true;
-      wakeAll();
+      closeStream();
     },
   };
 }

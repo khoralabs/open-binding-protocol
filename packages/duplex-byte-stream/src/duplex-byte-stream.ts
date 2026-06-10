@@ -1,3 +1,10 @@
+import {
+  DEFAULT_MAX_INBOUND_QUEUE_DEPTH,
+  enqueueInbound,
+  type InboundSide,
+  wakeInboundWaiters,
+} from "./bounded-inbound";
+
 /** Duplex byte stream abstraction (transport-agnostic). */
 export interface DuplexByteStream {
   read(): AsyncIterable<Uint8Array>;
@@ -5,19 +12,29 @@ export interface DuplexByteStream {
   close(reason?: unknown): Promise<void>;
 }
 
-type Side = { q: Uint8Array[]; w: Array<() => void> };
-
-const wakeAll = (s: Side): void => {
-  for (const f of s.w.splice(0)) {
-    f();
-  }
+export type MemoryDuplexByteStreamOptions = {
+  maxInboundQueueDepth?: number;
 };
 
+type Side = InboundSide;
+
 /** Pair of connected in-memory streams for tests. Calling `close()` on either ends both readers. */
-export function createMemoryDuplexByteStreamPair(): [DuplexByteStream, DuplexByteStream] {
+export function createMemoryDuplexByteStreamPair(
+  options?: MemoryDuplexByteStreamOptions,
+): [DuplexByteStream, DuplexByteStream] {
+  const maxDepth = options?.maxInboundQueueDepth ?? DEFAULT_MAX_INBOUND_QUEUE_DEPTH;
   const a: Side = { q: [], w: [] };
   const b: Side = { q: [], w: [] };
   let done = false;
+
+  const closeBoth = (): void => {
+    if (done) {
+      return;
+    }
+    done = true;
+    wakeInboundWaiters(a);
+    wakeInboundWaiters(b);
+  };
 
   const make = (incoming: Side, outgoing: Side): DuplexByteStream => ({
     async *read() {
@@ -42,16 +59,10 @@ export function createMemoryDuplexByteStreamPair(): [DuplexByteStream, DuplexByt
       if (done) {
         return;
       }
-      outgoing.q.push(bytes);
-      wakeAll(outgoing);
+      enqueueInbound(outgoing, bytes, maxDepth, closeBoth);
     },
     async close() {
-      if (done) {
-        return;
-      }
-      done = true;
-      wakeAll(a);
-      wakeAll(b);
+      closeBoth();
     },
   });
 

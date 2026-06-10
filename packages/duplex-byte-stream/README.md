@@ -20,6 +20,10 @@ interface DuplexByteStream {
 
 Creates a linked in-memory pair for tests — bytes sent on one side are received on the other.
 
+### Bounded inbound queues
+
+Each read side buffers at most `DEFAULT_MAX_INBOUND_QUEUE_DEPTH` (256) chunks. When a fast sender exceeds that depth, the stream **closes** and drops the overflow chunk — preventing memory DoS on WebSocket and in-memory adapters. Override via `maxInboundQueueDepth` on `createMemoryDuplexByteStreamPair` / `createWebSocketDuplexByteStream`.
+
 ### WebSocket adapter
 
 `createWebSocketDuplexByteStream` / `WebSocketDuplexByteSend` — wraps a WebSocket into a `DuplexByteStream`.
