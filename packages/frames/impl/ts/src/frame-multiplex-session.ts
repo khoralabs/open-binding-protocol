@@ -4,7 +4,7 @@ import type { SessionOp } from "@khoralabs/obp-session-impl";
 import { canonicalSessionParties, normalizeSessionInit } from "./frame-init-wire";
 import { MultiplexSessionRuntime } from "./frame-multiplex-runtime";
 import { defaultSessionEnvelopeSyncAdapter } from "./frame-multiplex-session-envelope-default";
-import { ensureSignerInSession } from "./frame-multiplex-session-helpers";
+import { ensureSignerInSession, type SessionInitTemplate } from "./frame-multiplex-session-helpers";
 import type { RunFrameMultiplexSessionArgs } from "./frame-multiplex-session-types";
 import type { SessionInitNormalized } from "./frame-protocol-types";
 
@@ -25,13 +25,19 @@ function validateRunFrameMultiplexSessionArgs(args: RunFrameMultiplexSessionArgs
   }
 
   const usesSequentialPlans = plans.length > 0;
-  const lazyTemplate: Pick<SessionInitNormalized, "parties"> | undefined =
+  const lazyTemplate: SessionInitTemplate | undefined =
     args.sessionTemplate !== undefined
       ? {
           parties: canonicalSessionParties([
             args.sessionTemplate.parties[0],
             args.sessionTemplate.parties[1],
           ]),
+          ...(args.sessionTemplate.session_id !== undefined
+            ? { session_id: args.sessionTemplate.session_id }
+            : {}),
+          ...(args.sessionTemplate.genesis_hash !== undefined
+            ? { genesis_hash: args.sessionTemplate.genesis_hash }
+            : {}),
         }
       : undefined;
 
@@ -42,12 +48,23 @@ function validateRunFrameMultiplexSessionArgs(args: RunFrameMultiplexSessionArgs
     );
   }
 
+  if (userOpener === undefined && lazyTemplate !== undefined) {
+    const sid = lazyTemplate.session_id?.trim() ?? "";
+    const gh = lazyTemplate.genesis_hash?.trim() ?? "";
+    if (sid === "" || gh === "") {
+      throw new ObpError(
+        "VALIDATION",
+        "responder sessionTemplate requires session_id and genesis_hash (out-of-band genesis agreement)",
+      );
+    }
+  }
+
   const signer = args.signer;
 
   if (userOpener === undefined && lazyTemplate !== undefined) {
     const templateInit: SessionInitNormalized = {
       session_id: "__template__",
-      parties: lazyTemplate.parties,
+      parties: [lazyTemplate.parties[0], lazyTemplate.parties[1]],
       genesis_hash: "__template_genesis__",
     };
     if (usesSequentialPlans) {

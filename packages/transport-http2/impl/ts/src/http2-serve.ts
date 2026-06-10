@@ -114,6 +114,8 @@ export function serveObp(options: ObpServeOptions): Promise<ObpServerHandle> {
             client: options.client,
             sessionTemplate: {
               parties: canonicalSessionParties([ctx.init.parties[0], ctx.init.parties[1]]),
+              session_id: ctx.init.session_id,
+              genesis_hash: ctx.init.genesis_hash,
             },
             handlers,
             initiatorChainPlans: [],

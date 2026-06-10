@@ -45,3 +45,23 @@ const stopPurge = startFrameRelayPurgeInterval(hub, 5 * 60_000); // every 5 min
 ```
 
 Long-running daemons SHOULD call `hub.purgeExpiredChannels()` periodically (or use `startFrameRelayPurgeInterval`).
+
+## SQLite pairing secret encryption
+
+The reference SQLite store encrypts `rooms.pairing_secret_hex` with AES-256-GCM. Pass a 32-byte key when creating the strategy:
+
+```ts
+import {
+  createSqliteFrameRelayStoreStrategy,
+  pairingSecretKeyFromEnv,
+  restrictRelayStoreDatabasePermissions,
+} from "@khoralabs/obp-frame-relay-sqlite";
+
+const dbPath = "/var/lib/obp/relay.sqlite";
+restrictRelayStoreDatabasePermissions(dbPath);
+const store = createSqliteFrameRelayStoreStrategy(db, {
+  pairingSecretKey: pairingSecretKeyFromEnv(),
+});
+```
+
+Set `OBP_PAIRING_SECRET_ENCRYPTION_KEY` in production (64-char hex or ≥32-byte UTF-8). See [SECURITY.md](../../SECURITY.md).

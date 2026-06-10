@@ -2,8 +2,8 @@ import type { DuplexByteStream } from "@khoralabs/duplex-byte-stream";
 import type { NbcBindPolicyValidateFn } from "@khoralabs/obp-nbc";
 import type { ObpPersistenceClient } from "@khoralabs/obp-persistence";
 import type { SessionOp } from "@khoralabs/obp-session-impl";
-
 import type { FrameDag } from "./frame-dag";
+import type { SessionInitTemplate } from "./frame-multiplex-session-helpers";
 import type {
   FrameMultiplexOpenerApi,
   FrameSessionHandlers,
@@ -30,7 +30,8 @@ export type RunFrameMultiplexSessionArgs = {
   signer: FrameSigner;
   verifier: FrameVerifier;
   client: ObpPersistenceClient;
-  sessionTemplate?: Pick<SessionInitNormalized, "parties">;
+  /** Responder expectation; pin `session_id` and `genesis_hash` when the host agrees them out-of-band. */
+  sessionTemplate?: SessionInitTemplate;
   handlers: FrameSessionHandlers;
   sessionEnvelopeSync?: SessionEnvelopeSyncAdapter;
   initiatorChainPlans?: Array<{ init: SessionInitNormalized }>;

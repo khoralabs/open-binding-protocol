@@ -1,11 +1,19 @@
 import { Database } from "bun:sqlite";
 import { describe, expect, test } from "bun:test";
+import { isEncryptedPairingSecret } from "./pairing-secret-cipher";
+import { pairingSecretKeyFromHex, TEST_PAIRING_SECRET_KEY_HEX } from "./pairing-secret-key";
 import { createSqliteFrameRelayStoreStrategy } from "./strategy";
+
+const testKey = pairingSecretKeyFromHex(TEST_PAIRING_SECRET_KEY_HEX);
+
+function testStore(db: Database) {
+  return createSqliteFrameRelayStoreStrategy(db, { pairingSecretKey: testKey });
+}
 
 describe("createSqliteFrameRelayStoreStrategy", () => {
   test("persists admission and relayed frames", () => {
     const db = new Database(":memory:");
-    const store = createSqliteFrameRelayStoreStrategy(db);
+    const store = testStore(db);
     const now = Date.now();
     store.upsertChannelAdmission({
       channelId: "ch-1",
@@ -14,6 +22,10 @@ describe("createSqliteFrameRelayStoreStrategy", () => {
       expiresAtMs: now + 60_000,
     });
     expect(store.getPairingSecretIfActive("ch-1", now)).toBe("abc");
+    const row = db
+      .prepare(`SELECT pairing_secret_hex FROM rooms WHERE channel_id = ?`)
+      .get("ch-1") as { pairing_secret_hex: string };
+    expect(isEncryptedPairingSecret(row.pairing_secret_hex)).toBe(true);
     const id = store.enqueueRelayedFrame("ch-1", new Uint8Array([1, 2, 3]));
     expect(id).toBe(1);
     expect(store.listRelayedFramesAfter("ch-1", 0)).toHaveLength(1);
@@ -26,6 +38,7 @@ describe("createSqliteFrameRelayStoreStrategy", () => {
   test("enqueue stays within maxFramesPerChannel", () => {
     const db = new Database(":memory:");
     const store = createSqliteFrameRelayStoreStrategy(db, {
+      pairingSecretKey: testKey,
       spoolLimits: {
         maxFramesPerChannel: 2,
         maxBytesPerChannel: 1024 * 1024,
@@ -44,7 +57,7 @@ describe("createSqliteFrameRelayStoreStrategy", () => {
 
   test("purgeExpiredChannels removes expired admission and frames", () => {
     const db = new Database(":memory:");
-    const store = createSqliteFrameRelayStoreStrategy(db);
+    const store = testStore(db);
     const now = 1_000_000;
     store.upsertChannelAdmission({
       channelId: "expired",

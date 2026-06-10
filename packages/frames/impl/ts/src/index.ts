@@ -46,6 +46,7 @@ export {
   runFrameMultiplexSession,
   type SessionEnvelopeSyncAdapter,
 } from "./frame-multiplex-session";
+export { type SessionInitTemplate, templateMatch } from "./frame-multiplex-session-helpers";
 export type {
   FrameMultiplexOpenerApi,
   FrameSessionHandle,

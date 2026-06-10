@@ -8,10 +8,13 @@ import {
   DEFAULT_FRAME_RELAY_SPOOL_LIMITS,
   type FrameRelaySpoolLimits,
 } from "@khoralabs/obp-frame-relay";
+import { decryptPairingSecretHex, encryptPairingSecretHex } from "./pairing-secret-cipher";
 import { ensureFrameRelayStoreSchema } from "./schema";
 
 export type SqliteFrameRelayStoreOptions = {
   spoolLimits?: FrameRelaySpoolLimits;
+  /** 32-byte AES key from KMS/env; pairing secrets are encrypted at rest before INSERT. */
+  pairingSecretKey: Uint8Array;
 };
 
 function trimChannelSpool(
@@ -58,6 +61,10 @@ export function createSqliteFrameRelayStoreStrategy(
   options?: SqliteFrameRelayStoreOptions,
 ): FrameRelayStoreStrategy {
   const spoolLimits = options?.spoolLimits ?? DEFAULT_FRAME_RELAY_SPOOL_LIMITS;
+  const pairingSecretKey = options?.pairingSecretKey;
+  if (pairingSecretKey === undefined) {
+    throw new Error("pairingSecretKey is required for SQLite frame relay store");
+  }
   ensureFrameRelayStoreSchema(db);
   const upsertAdmissionStmt = db.prepare(
     `INSERT INTO rooms (channel_id, pairing_secret_hex, created_at_ms, expires_at_ms)
@@ -83,7 +90,7 @@ export function createSqliteFrameRelayStoreStrategy(
     upsertChannelAdmission(record: ChannelAdmissionRecord): void {
       upsertAdmissionStmt.run(
         record.channelId,
-        record.pairingSecretHex,
+        encryptPairingSecretHex(record.pairingSecretHex, pairingSecretKey),
         record.createdAtMs,
         record.expiresAtMs,
       );
@@ -92,8 +99,12 @@ export function createSqliteFrameRelayStoreStrategy(
     getPairingSecretIfActive(channelId: string, nowMs: number): string | undefined {
       const row = selectPairingSecret.get(channelId, nowMs) as
         | { pairing_secret_hex: string }
+        | null
         | undefined;
-      return row?.pairing_secret_hex;
+      if (row == null) {
+        return undefined;
+      }
+      return decryptPairingSecretHex(row.pairing_secret_hex, pairingSecretKey);
     },
 
     enqueueRelayedFrame(channelId: string, bytes: Uint8Array): number {

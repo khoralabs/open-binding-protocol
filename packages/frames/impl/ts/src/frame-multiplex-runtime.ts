@@ -43,6 +43,7 @@ import {
   frameDedupeKeyHex,
   partyIdForActor,
   remoteActorForSigner,
+  type SessionInitTemplate,
   templateMatch,
 } from "./frame-multiplex-session-helpers";
 import type {
@@ -82,7 +83,7 @@ export class MultiplexSessionRuntime {
   private readonly closeChannelWhenIdle: boolean;
   private readonly validateBindPayload: RunFrameMultiplexSessionArgs["validateBindPayload"];
 
-  private lazyTemplate: Pick<SessionInitNormalized, "parties"> | undefined;
+  private lazyTemplate: SessionInitTemplate | undefined;
   private sequentialOpenedThrough = -1;
   private openerFinished: boolean;
 
@@ -130,6 +131,12 @@ export class MultiplexSessionRuntime {
               args.sessionTemplate.parties[0],
               args.sessionTemplate.parties[1],
             ]),
+            ...(args.sessionTemplate.session_id !== undefined
+              ? { session_id: args.sessionTemplate.session_id }
+              : {}),
+            ...(args.sessionTemplate.genesis_hash !== undefined
+              ? { genesis_hash: args.sessionTemplate.genesis_hash }
+              : {}),
           }
         : undefined;
 
@@ -205,7 +212,11 @@ export class MultiplexSessionRuntime {
   private registerChain(wireRaw: SessionInitNormalized, hooks?: MultiplexChainHooks): void {
     const wire = normalizeSessionInit(wireRaw);
     if (this.lazyTemplate === undefined) {
-      this.lazyTemplate = { parties: wire.parties };
+      this.lazyTemplate = {
+        parties: wire.parties,
+        session_id: wire.session_id,
+        genesis_hash: wire.genesis_hash,
+      };
     } else if (!templateMatch(wire, this.lazyTemplate)) {
       throw new ObpError("VALIDATION", "init does not match session template");
     }

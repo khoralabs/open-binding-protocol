@@ -2,8 +2,15 @@ import { createHash } from "node:crypto";
 import { ObpError } from "@khoralabs/obp-errors";
 import type { FrameLikeForSessionOp } from "@khoralabs/obp-session-impl";
 
-import type { Frame, SessionInitNormalized } from "./frame-protocol-types";
+import type { Frame, SessionInitNormalized, SessionParty } from "./frame-protocol-types";
 import type { FrameSigner } from "./frame-signer";
+
+/** Host-expected session bootstrap; pin `session_id` / `genesis_hash` on responders to block init substitution. */
+export type SessionInitTemplate = {
+  parties: readonly [SessionParty, SessionParty];
+  session_id?: string;
+  genesis_hash?: string;
+};
 
 export function partyIdForActor(init: SessionInitNormalized, actor: string): string {
   const p = init.parties.find((x) => x.pubkey === actor);
@@ -11,16 +18,22 @@ export function partyIdForActor(init: SessionInitNormalized, actor: string): str
   return p.id;
 }
 
-export function templateMatch(
-  wire: SessionInitNormalized,
-  t: Pick<SessionInitNormalized, "parties">,
-): boolean {
-  return (
-    wire.parties[0].id === t.parties[0].id &&
-    wire.parties[1].id === t.parties[1].id &&
-    wire.parties[0].pubkey === t.parties[0].pubkey &&
-    wire.parties[1].pubkey === t.parties[1].pubkey
-  );
+export function templateMatch(wire: SessionInitNormalized, t: SessionInitTemplate): boolean {
+  if (
+    wire.parties[0].id !== t.parties[0].id ||
+    wire.parties[1].id !== t.parties[1].id ||
+    wire.parties[0].pubkey !== t.parties[0].pubkey ||
+    wire.parties[1].pubkey !== t.parties[1].pubkey
+  ) {
+    return false;
+  }
+  if (t.session_id !== undefined && wire.session_id !== t.session_id) {
+    return false;
+  }
+  if (t.genesis_hash !== undefined && wire.genesis_hash !== t.genesis_hash) {
+    return false;
+  }
+  return true;
 }
 
 export function ensureSignerInSession(init: SessionInitNormalized, signer: FrameSigner): void {

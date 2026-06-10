@@ -43,6 +43,8 @@ export async function runFrameSession(args: RunFrameSessionArgs): Promise<Sessio
     client,
     sessionTemplate: {
       parties: canonicalSessionParties([init.parties[0], init.parties[1]]),
+      session_id: init.session_id,
+      genesis_hash: init.genesis_hash,
     },
     handlers,
     ...(sessionEnvelopeSync !== undefined ? { sessionEnvelopeSync } : {}),

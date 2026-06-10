@@ -5,6 +5,7 @@ export function ensureFrameRelayStoreSchema(db: Database): void {
   db.run(`
     CREATE TABLE IF NOT EXISTS rooms (
       channel_id TEXT PRIMARY KEY NOT NULL,
+      -- AES-256-GCM envelope (see pairing-secret-cipher.ts); legacy rows may be plaintext hex.
       pairing_secret_hex TEXT NOT NULL,
       created_at_ms INTEGER NOT NULL,
       expires_at_ms INTEGER NOT NULL
