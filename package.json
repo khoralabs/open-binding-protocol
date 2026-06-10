@@ -5,6 +5,8 @@
   "type": "module",
   "workspaces": [
     "packages/*",
+    "packages/bind-policy",
+    "packages/duplex-byte-stream",
     "packages/react/examples",
     "packages/agents/*",
     "packages/persistence/*",
