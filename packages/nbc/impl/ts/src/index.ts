@@ -13,7 +13,6 @@ export type {
 export {
   type ApplyNbcFrameTurnResult,
   applyNbcFrameTurn,
-  nbcTurnBodyToWireRecord,
   parseNbcFrameTurnBody,
 } from "./nbc-graph-effect";
 export {
@@ -51,4 +50,5 @@ export {
   type NbcTurnBody,
   nbcPortSpecToPort,
   parseNbcTurnBody,
+  serializeNbcTurnBodyForWire,
 } from "./nbc-types";

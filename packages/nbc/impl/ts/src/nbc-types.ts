@@ -80,10 +80,9 @@ function parseNbcOfferSpec(v: unknown): NbcOfferSpec {
 function parseNbcPortSpec(v: unknown): NbcPortSpec {
   if (!isRecord(v)) throw new TypeError("port spec: expected object");
   const id = v.id;
-  const rawType = v.type ?? v.portType;
-  const type =
-    typeof rawType === "string" && rawType.trim() !== "" ? rawType.trim() : "obp.frame.port";
+  const type = v.type;
   if (typeof id !== "string") throw new TypeError("NbcPortSpec.id: expected string");
+  if (typeof type !== "string") throw new TypeError("NbcPortSpec.type: expected string");
   const promise = typeof v.promise === "string" ? v.promise : "";
   const expires_turn = toNonnegInt(v.expires_turn, "NbcPortSpec.expires_turn");
   const expires_at_relay_ms = toRelayMs(v.expires_at_relay_ms, "NbcPortSpec.expires_at_relay_ms");
@@ -125,36 +124,21 @@ function parseNbcPortSpec(v: unknown): NbcPortSpec {
 export function parseNbcTurnBody(v: unknown): NbcTurnBody {
   if (!isRecord(v)) throw new TypeError("NbcTurnBody: expected object");
 
-  let offer: NbcOfferSpec;
-  if (v.offer !== undefined && v.offer !== null) {
-    offer = parseNbcOfferSpec(v.offer);
-  } else {
-    const id = String(v.offerId ?? "");
-    const type = String(v.offerType ?? "");
-    const expires_turn = toNonnegInt(v.expires_turn, "expires_turn");
-    const expires_at_relay_ms = toRelayMs(v.expires_at_relay_ms, "expires_at_relay_ms");
-    offer = { id, type, expires_turn, expires_at_relay_ms };
-  }
+  const offer = parseNbcOfferSpec(v.offer);
 
   const portsRaw = v.ports;
   if (!Array.isArray(portsRaw)) throw new TypeError("ports: expected array");
   const ports = portsRaw.map(parseNbcPortSpec);
-  const bind_port_id =
-    typeof v.bind_port_id === "string"
-      ? v.bind_port_id
-      : typeof v.bindPortId === "string"
-        ? v.bindPortId
-        : "";
+
+  const bind_port_id = typeof v.bind_port_id === "string" ? v.bind_port_id : "";
+
   let bind_payload: JsonDocument | null = null;
   if ("bind_payload" in v) {
     const bp = v.bind_payload;
     if (bp === undefined || bp === null) bind_payload = null;
     else bind_payload = bp as JsonDocument;
-  } else if ("counterparty_bind" in v) {
-    const cb = v.counterparty_bind;
-    if (cb === undefined || cb === null) bind_payload = null;
-    else bind_payload = cb as JsonDocument;
   }
+
   return { offer, ports, bind_port_id, bind_payload };
 }
 
@@ -165,6 +149,35 @@ export function isNbcTurnBody(v: unknown): v is NbcTurnBody {
   } catch {
     return false;
   }
+}
+
+function relayMsForWire(n: number): number | string {
+  return n <= Number.MAX_SAFE_INTEGER && n >= Number.MIN_SAFE_INTEGER ? n : String(n);
+}
+
+/** Canonical `Frame.body` JSON for outbound NBC TURN frames (`khora.obp.nbc#NbcTurnBody`). */
+export function serializeNbcTurnBodyForWire(body: NbcTurnBody): Record<string, unknown> {
+  return {
+    offer: {
+      id: body.offer.id,
+      type: body.offer.type,
+      expires_turn: body.offer.expires_turn,
+      expires_at_relay_ms: relayMsForWire(body.offer.expires_at_relay_ms),
+    },
+    ports: body.ports.map((p) => ({
+      id: p.id,
+      type: p.type,
+      promise: p.promise,
+      expires_turn: p.expires_turn,
+      expires_at_relay_ms: relayMsForWire(p.expires_at_relay_ms),
+      bind_policy: p.bind_policy,
+      ref: p.ref,
+      ...(p.max_bindings !== undefined ? { max_bindings: p.max_bindings } : {}),
+      ...(p.terminal !== undefined ? { terminal: p.terminal } : {}),
+    })),
+    bind_port_id: body.bind_port_id,
+    bind_payload: body.bind_payload,
+  };
 }
 
 /** Map **`NbcPortSpec`** to a thin **`khora.obp#Port`** for `ExposePort` (drops `bind_policy`). */

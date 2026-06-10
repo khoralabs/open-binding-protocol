@@ -5,7 +5,7 @@ import type { JsonDocument } from "@khoralabs/obp-model";
 import { createInMemoryObpPersistenceClient } from "@khoralabs/obp-persistence";
 import { getBindablePortsForParty, isSessionAdvanceable, nbcNaturalStop } from "./nbc-session";
 import { applyNbcTurn } from "./nbc-turn";
-import { parseNbcTurnBody } from "./nbc-types";
+import { parseNbcTurnBody, serializeNbcTurnBodyForWire } from "./nbc-types";
 
 const timing0 = { turnSeq: 0, relayTsMs: 1 } as const;
 
@@ -306,5 +306,38 @@ describe("nbc session reads", () => {
     await applyNbcTurn({ partyId: party.id, body, client, timing: timing0 });
     expect(await isSessionAdvanceable(client, timing0)).toBe(false);
     expect(await nbcNaturalStop(0, client, timing0)).toBe(true);
+  });
+});
+
+describe("serializeNbcTurnBodyForWire", () => {
+  test("emits canonical nested offer shape", () => {
+    const body = parseNbcTurnBody({
+      offer: { id: "o1", type: "step", expires_turn: 1, expires_at_relay_ms: 2 },
+      ports: [],
+      bind_port_id: "",
+      bind_payload: null,
+    });
+    const wire = serializeNbcTurnBodyForWire(body);
+    expect(wire).toEqual({
+      offer: { id: "o1", type: "step", expires_turn: 1, expires_at_relay_ms: 2 },
+      ports: [],
+      bind_port_id: "",
+      bind_payload: null,
+    });
+    expect(parseNbcTurnBody(wire)).toEqual(body);
+  });
+
+  test("rejects legacy flat wire keys", () => {
+    expect(() =>
+      parseNbcTurnBody({
+        offerId: "o1",
+        offerType: "step",
+        expires_turn: 1,
+        expires_at_relay_ms: 2,
+        ports: [],
+        bindPortId: "p1",
+        bind_payload: { x: 1 },
+      }),
+    ).toThrow();
   });
 });

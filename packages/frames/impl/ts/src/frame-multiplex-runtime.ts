@@ -4,8 +4,8 @@ import { ObpError } from "@khoralabs/obp-errors";
 import {
   applyNbcFrameTurn,
   type NbcTurnBody,
-  nbcTurnBodyToWireRecord,
   parseNbcFrameTurnBody,
+  serializeNbcTurnBodyForWire,
 } from "@khoralabs/obp-nbc";
 import type { ObpPersistenceClient } from "@khoralabs/obp-persistence";
 import { accumulateTaggedSessionOps, type SessionOp } from "@khoralabs/obp-session-impl";
@@ -446,7 +446,7 @@ export class MultiplexSessionRuntime {
         throw new ObpError("VALIDATION", "emitOutboundTurn: unknown or inactive chain");
       }
       const st = this.e2eeByChain.get(chain);
-      let wire = nbcTurnBodyToWireRecord(body);
+      let wire = serializeNbcTurnBodyForWire(body);
       if (this.frameChannelBodyE2ee) {
         if (st === undefined || !st.ready || st.aesKey === null) {
           throw new ObpError("VALIDATION", "E2EE: cannot send TURN before handshake completes");
