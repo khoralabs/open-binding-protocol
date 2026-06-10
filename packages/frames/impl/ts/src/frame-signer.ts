@@ -76,9 +76,13 @@ export async function createEd25519FrameSigner(
 export function createEd25519FrameVerifier(): FrameVerifier {
   return {
     async verify(actor: string, bytes: Uint8Array, sigHex: string): Promise<boolean> {
-      const pk = await importEd25519PublicKeyFromActorHex(actor);
-      const sig = hexToBytes(sigHex);
-      return crypto.subtle.verify("Ed25519", pk, sig as never, bytes as never);
+      try {
+        const pk = await importEd25519PublicKeyFromActorHex(actor);
+        const sig = hexToBytes(sigHex);
+        return crypto.subtle.verify("Ed25519", pk, sig as never, bytes as never);
+      } catch {
+        return false;
+      }
     },
   };
 }
