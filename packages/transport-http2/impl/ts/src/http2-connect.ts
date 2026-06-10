@@ -116,6 +116,7 @@ export async function connectObpSession(
       verifier,
       client: options.client,
       handlers: {},
+      frameChannelBodyE2ee: true,
       ...(sessionEnvelopeSync !== undefined ? { sessionEnvelopeSync } : {}),
       openerSession: async (api) => {
         const conn: ObpFrameConnection = {

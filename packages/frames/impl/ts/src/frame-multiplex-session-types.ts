@@ -40,8 +40,10 @@ export type RunFrameMultiplexSessionArgs = {
   /** NBC N4 bind payload validation when inbound TURN carries an active **`bind_policy`**. */
   validateBindPayload?: NbcBindPolicyValidateFn | undefined;
   /**
-   * When true, negotiation frame bodies use X25519 + AES-GCM (frame channel baseline).
-   * Direct transports (e.g. HTTP/2) omit this so peers exchange bare NBC bodies.
+   * When true, negotiation `Frame.body` values use ephemeral X25519 + AES-GCM after the
+   * signed END_OFFERS handshake (see `docs/FRAME_CHANNEL_E2EE.md`). Reference transports
+   * (`@khoralabs/obp-transport-ws`, `@khoralabs/obp-transport-http2`) enable this by default.
+   * Omit only for in-process tests or when TLS end-to-end trust is explicitly sufficient.
    */
   frameChannelBodyE2ee?: boolean;
   /**

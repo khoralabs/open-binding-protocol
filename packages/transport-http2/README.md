@@ -16,4 +16,4 @@ cd packages/transport-http2/impl/ts && bun run typecheck
 cd packages/transport-http2/spec && smithy validate model && smithy build
 ```
 
-Adapts an HTTP/2 stream into a `DuplexByteStream` for use with the OBP frame session pipeline (`@khoralabs/obp-frames-impl`).
+Adapts an HTTP/2 stream into a `DuplexByteStream` for use with the OBP frame session pipeline (`@khoralabs/obp-frames-impl`). Frame bodies are E2EE by default on both `serveObp` and `connectObpSession` (parity with `@khoralabs/obp-transport-ws`).
