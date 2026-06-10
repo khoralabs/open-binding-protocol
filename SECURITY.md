@@ -34,3 +34,7 @@ Production deployments **should**:
 3. Rotate or purge expired channels (`purgeExpiredChannels`) so stale admission rows do not accumulate.
 
 Anyone with **both** the database file and the field encryption key can still mint valid tickets for active channels; protect keys separately from backups and restrict process/runtime access.
+
+### Frame relay WebSocket admission
+
+`upgradeFrameRelayHubWebSocket` verifies HMAC tickets but does **not** enforce `Origin`, TLS, or rate limits by default. Browser-facing relays **must** pass `allowedOrigins` (or equivalent checks in `authorize`) — ticket-only admission does not prevent cross-site WebSocket CSRF. Use `requireTls: true` when upgrades are served over HTTPS.

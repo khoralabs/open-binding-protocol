@@ -22,8 +22,17 @@ export type {
   RelayedFrameRecord,
 } from "./store-types";
 export {
+  type AllowedWebSocketOriginOptions,
+  type FrameRelayHubWsAuthorizeHook,
   type FrameRelayHubWsData,
+  type FrameRelayHubWsOpenContext,
+  type FrameRelayHubWsOpenHook,
+  type FrameRelayHubWsUpgradeContext,
   type FrameRelayHubWsUpgradePort,
   frameRelayHubWebSocketHandlers,
+  isAllowedWebSocketOrigin,
+  isSecureWebSocketUpgrade,
+  type UpgradeFrameRelayHubWebSocketOptions,
   upgradeFrameRelayHubWebSocket,
+  webSocketRequestOrigin,
 } from "./transport-bun";
