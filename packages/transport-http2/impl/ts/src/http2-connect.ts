@@ -1,6 +1,6 @@
 import type { OutgoingHttpHeaders } from "node:http";
 import http2 from "node:http2";
-import type { DuplexByteStream } from "@khoralabs/duplex-byte-stream";
+import type { DuplexByteStream } from "@khoralabs/obp-byte-stream";
 import { ObpError } from "@khoralabs/obp-errors";
 import {
   createEd25519FrameVerifier,

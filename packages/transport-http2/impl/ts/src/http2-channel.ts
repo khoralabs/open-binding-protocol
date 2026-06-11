@@ -1,6 +1,6 @@
 import type { ClientHttp2Stream, ServerHttp2Stream } from "node:http2";
 import type { Duplex } from "node:stream";
-import type { DuplexByteStream } from "@khoralabs/duplex-byte-stream";
+import type { DuplexByteStream } from "@khoralabs/obp-byte-stream";
 
 function duplexStreamChannel(stream: Duplex): DuplexByteStream {
   return {

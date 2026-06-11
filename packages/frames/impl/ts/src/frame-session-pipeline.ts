@@ -1,4 +1,4 @@
-import type { DuplexByteStream } from "@khoralabs/duplex-byte-stream";
+import type { DuplexByteStream } from "@khoralabs/obp-byte-stream";
 import type { ObpPersistenceClient } from "@khoralabs/obp-persistence";
 import type { SessionOp } from "@khoralabs/obp-session-impl";
 import { canonicalSessionParties } from "./frame-init-wire";

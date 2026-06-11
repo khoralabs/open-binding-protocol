@@ -1,6 +1,6 @@
 import { Buffer } from "node:buffer";
-import type { DuplexByteStream } from "@khoralabs/duplex-byte-stream";
-import { createWebSocketDuplexByteStream } from "@khoralabs/duplex-byte-stream";
+import type { DuplexByteStream } from "@khoralabs/obp-byte-stream";
+import { createWebSocketDuplexByteStream } from "@khoralabs/obp-byte-stream";
 import { ObpError } from "@khoralabs/obp-errors";
 import {
   createEd25519FrameVerifier,
