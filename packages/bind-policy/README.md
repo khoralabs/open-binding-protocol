@@ -7,14 +7,14 @@
 | When | Where | What |
 |------|--------|------|
 | Port expose | `ObpPersistence` (`validateBindPolicyAtExpose`) | Compile-check that **`bind_policy`** is a well-formed JSON Schema |
-| Outbound TURN (sender) | Frame multiplexer (`validateOutboundNbcTurnBind` before encrypt) | Early fail-fast for honest clients; optional hygiene only |
+| Outbound TURN (sender) | Frame multiplexer (`validateOutboundNbcTurnBind` before send) | Early fail-fast for honest clients; optional hygiene only |
 | Inbound TURN (receiver) | Frame multiplexer (`applyNbcTurn` → `normalizeNbcBindPayload`) | **Authoritative** — invalid binds are rejected and not persisted |
 
-**"Host"** means the bilateral NBC endpoint (daemon/client running the frame multiplexer + local persistence), not the frame relay. The relay forwards **E2EE ciphertext** and never runs AJV on wire payloads.
+**"Host"** means the bilateral NBC endpoint (daemon/client running the frame multiplexer + local persistence), not the relay. The relay forwards opaque bytes (MLS `mls1` envelopes or plaintext multiplex) and never runs AJV on wire payloads.
 
-After E2EE decrypt, the **receiving peer** validates `bind_payload` against the port's `bind_policy` before `bindPort` writes a row. A malicious sender can still transmit invalid ciphertext; only the receiver's apply path decides whether a bind succeeds. Configure **`validateBindPayload`** (typically `validateNbcBindPayloadForPort`) on every multiplexer that may accept binds to ports with an active policy; without it, active policies fail closed at apply time.
+The **receiving peer** validates `bind_payload` against the port's `bind_policy` on the logical TURN body (after MLS decrypt when the MLS hub profile is in use) before `bindPort` writes a row. Configure **`validateBindPayload`** (typically `validateNbcBindPayloadForPort`) on every multiplexer that may accept binds to ports with an active policy; without it, active policies fail closed at apply time.
 
-`bind_policy` is public port metadata (the schema contract). `bind_payload` lives inside E2EE TURN bodies between the two session parties.
+`bind_policy` is public port metadata (the schema contract). `bind_payload` lives in logical TURN bodies between the two session parties.
 
 ## Exports
 

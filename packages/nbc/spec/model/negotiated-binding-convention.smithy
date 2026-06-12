@@ -2,7 +2,7 @@ $version: "2"
 
 namespace khora.obp.nbc
 
-/// **Negotiated Binding Convention (NBC)** — conventions for **using** the Offer Binding Protocol (`khora.obp`) in a **negotiated** context (e.g. peer-to-peer negotiation): when a **bind** is admissible, how **`turn_seq`** and **`relay_ts_ms`** (from **`khora.obp.frame.relay#RelayEnvelope`** when hub relay policy applies) relate to NBC bind windows (**`NbcOfferSpec`**, **`NbcPortSpec`**, and **`ObpPersistence`** **`nbc_expires_*`** projections — **not** fields on thin **`khora.obp#Offer` / `khora.obp#Port`**), canonical **`NbcPortExposePolicy.max_bindings`** tally, **`terminal`** / **`bind_policy`** / TTL context, **`NbcBindSatisfaction`**, **`NbcRowCommitMeta`** (`created_seq`), and concurrency expectations.
+/// **Negotiated Binding Convention (NBC)** — conventions for **using** the Offer Binding Protocol (`khora.obp`) in a **negotiated** context (e.g. peer-to-peer negotiation): when a **bind** is admissible, how **`turn_seq`** and peer timing relate to NBC bind windows (**`NbcOfferSpec`**, **`NbcPortSpec`**, and **`ObpPersistence`** **`nbc_expires_*`** projections — **not** fields on thin **`khora.obp#Offer` / `khora.obp#Port`**), canonical **`NbcPortExposePolicy.max_bindings`** tally, **`terminal`** / **`bind_policy`** / TTL context, **`NbcBindSatisfaction`**, **`NbcRowCommitMeta`** (`created_seq`), and concurrency expectations.
 ///
 /// NBC is **not** a second graph protocol. It layers **social and orchestration** rules on top of the structural OBP persistence projection (`khora.obp#ObpPersistence`) and the live negotiation transports in **`khora.obp.frame`** and **`khora.obp.session`** (`packages/frames/spec/model/frame-protocol.smithy`, `packages/session/spec/model/session-protocol.smithy`).
 ///
@@ -15,7 +15,9 @@ namespace khora.obp.nbc
 ///
 /// **Normative rules (NBC)**
 ///
-/// **N1. Expiry at bind time.** Reject **BindPort** / bind leg of **ExtendOffer** when the binding **offer** or target **port** NBC bind window is expired per **either** active mode: resolve **`expires_turn`** / **`expires_at_relay_ms`** from **`NbcTurnBody`** / persisted **`nbc_expires_*`** projection for those rows (not from thin **`khora.obp#Offer` / `Port`**). If **`expires_turn ≠ 0`**, require **`turn_seq < expires_turn`**; if **`expires_at_relay_ms ≠ 0`**, require **`relay_ts_ms < expires_at_relay_ms`** where **`relay_ts_ms`** is taken from **`khora.obp.frame.relay#RelayEnvelope`** on the **TURN** when hub relay policy applies (same envelope for both parties). **`turn_seq`** is the count of DAG-committed frames on the chain before applying that **TURN** (implementation-defined equivalence to session ops).
+/// **N1. Expiry at bind time.** Reject **BindPort** / bind leg of **ExtendOffer** when the binding **offer** or target **port** NBC bind window is expired per **any** active mode: resolve **`expires_turn`** / **`expires_at_ms`** from **`NbcTurnBody`** / persisted **`nbc_expires_*`** projection for those rows (not from thin **`khora.obp#Offer` / `Port`**).
+/// - If **`expires_turn ≠ 0`**, require **`turn_seq < expires_turn`**.
+/// - If **`expires_at_ms ≠ 0`**, require **`effective_now_ms < expires_at_ms`** where **`effective_now_ms`** is the binder's conservative HLC-derived epoch (`khora.obp.nbc.clock`). Fail closed when **`effective_now_ms`** is unavailable.
 ///
 /// **N2. `max_bindings` (canonical tally).** Successful binds against a canonical port (after resolving **`khora.obp#Port.ref`**) MUST NOT exceed the effective **`NbcPortExposePolicy.max_bindings`** for that expose. Counting is **global (canonical)** only: every **BINDS** row whose **`portId`** resolves to the same **canonical port id** shares **one** usage tally. NBC does **not** define a separate bind budget per **EXPOSES** edge. NBC-conformant deployments MUST record **`max_bindings`** (and related policy) on **`NbcPortExposePolicy`** at expose time; OBP-only stacks without NBC MAY apply adapter-defined defaults outside this spec.
 ///
@@ -29,7 +31,7 @@ namespace khora.obp.nbc
 ///
 /// **N7. Multiple sessions and store boundaries.** NBC **N1–N8** apply **within** each **`ObpPersistence`** instance an NBC deployment attaches to frame/session work. Separate instances do **not** aggregate caps; one shared instance applies NBC on that graph, including **N6**. Session-to-store mapping remains **implementation-defined** outside NBC.
 ///
-/// **N8. Revocation (soft close).** NBC implementations MAY set **`nbc_expires_*`** projection (or wire equivalents on **`NbcOfferSpec` / `NbcPortSpec`**) so subsequent binds fail **N1** (e.g. relay ceiling at or before revocation via **`SetPortExpiredNow` / `SetOfferExpiredNow`**). **`NbcPortExposePolicy.terminal`** is an orchestration hint (e.g. completion workflows); it does not alter OBP graph topology. **ListExposedPortEdges** and related `ObpPersistence` reads support orchestration.
+/// **N8. Revocation (soft close).** NBC implementations MAY set **`nbc_expires_*`** projection (or wire equivalents on **`NbcOfferSpec` / `NbcPortSpec`**) so subsequent binds fail **N1** (e.g. epoch ceiling at or before revocation via **`SetPortExpiredNow` / `SetOfferExpiredNow`**). **`NbcPortExposePolicy.terminal`** is an orchestration hint (e.g. completion workflows); it does not alter OBP graph topology. **ListExposedPortEdges** and related `ObpPersistence` reads support orchestration.
 ///
 /// **N9. Row `created_seq` (commit metadata).** Implementations **MAY** persist a monotonic **`created_seq`** per stored graph row using **`khora.obp.nbc#NbcRowCommitMeta`** semantics. It is **not** part of **`khora.obp`** Smithy shapes (`packages/model/spec/model/shapes.smithy`); it supports NBC / adapter ordering and audit.
 ///

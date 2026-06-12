@@ -197,9 +197,9 @@ structure ExtendOfferInput {
     /// NBC N1 bind-window projection for this offer row — **not** part of **`khora.obp#Offer`**. Persisted alongside the thin offer; **`0`** disables the corresponding mode.
     @default(0)
     nbc_expires_turn: Integer
-    /// NBC N1 relay-time bind ceiling for this offer row — **not** part of **`khora.obp#Offer`**. **`0`** disables relay mode.
+    /// NBC N1 peer epoch bind ceiling — **not** on **`khora.obp#Offer`**. **`0`** disables epoch mode.
     @default(0)
-    nbc_expires_at_relay_ms: Long
+    nbc_expires_at_ms: Long
     /// When empty, no BINDS edge is created.
     @default("")
     bindPortId: String
@@ -223,9 +223,9 @@ structure ExposePortInput {
     /// NBC N1 bind-window projection for this new port row — **not** part of **`khora.obp#Port`**. **`0`** disables the corresponding mode.
     @default(0)
     nbc_expires_turn: Integer
-    /// NBC N1 relay-time bind ceiling — **not** on **`khora.obp#Port`**. **`0`** disables relay mode.
+    /// NBC N1 peer epoch bind ceiling — **not** on **`khora.obp#Port`**. **`0`** disables epoch mode.
     @default(0)
-    nbc_expires_at_relay_ms: Long
+    nbc_expires_at_ms: Long
     /// NBC expose-time bind policy snapshot persisted on the port row (ledger-visible). **`null`** when inactive.
     bind_policy: Document = null
     /// NBC N2 maximum successful binds after ref resolution. Default **1** when omitted.
@@ -368,7 +368,7 @@ structure GetNbcBindWindowForOfferInput {
 
 structure NbcBindWindowProjection {
     nbc_expires_turn: Integer
-    nbc_expires_at_relay_ms: Long
+    nbc_expires_at_ms: Long
 }
 
 union GetNbcBindWindowResult {

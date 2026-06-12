@@ -38,7 +38,7 @@ export type {
   NbcChainAfterBindViewport,
   NbcChainFlowSelection,
 } from "./nbc-chain/flow-types";
-export { formatExpiresTurn, formatRelayMs } from "./nbc-chain/format";
+export { formatEpochMs, formatExpiresTurn } from "./nbc-chain/format";
 export {
   type NbcChainBindEdgeData,
   type NbcChainOfferNodeData,

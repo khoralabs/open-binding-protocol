@@ -5,21 +5,6 @@ export {
   isActorPubkeysAscending,
   isSessionInitPartyStructure,
 } from "./frame-bootstrap";
-export {
-  decryptWireFrameBody,
-  deriveFrameBodyAesKey,
-  E2EE_HS_BODY_KEY,
-  E2EE_WIRE_BODY_KEY,
-  encryptLogicalFrameBody,
-  ephemeralX25519Keygen,
-  FRAME_E2EE_A256GCM,
-  FRAME_E2EE_PROFILE_V1,
-  handshakeBodyFromEphemeralPub,
-  isE2eeHandshakeBody,
-  minActorPubkeyFromInit,
-  parseHandshakeEphemeralPub,
-  x25519SharedSecret,
-} from "./frame-channel-e2ee";
 export { FrameDag, signingPayloadBytes } from "./frame-dag";
 export {
   createFrameDecoder,
@@ -88,3 +73,9 @@ export {
   tipSha256HexFromCompleteFrame,
 } from "./frame-signing";
 export { encodeLengthPrefixed, MAX_FRAME_BYTES } from "./length-prefix";
+export {
+  decodeMlsHubEnvelope,
+  encodeMlsHubEnvelope,
+  MLS_HUB_ENVELOPE_VERSION,
+  type MlsHubEnvelopeV1,
+} from "./mls-hub-envelope";

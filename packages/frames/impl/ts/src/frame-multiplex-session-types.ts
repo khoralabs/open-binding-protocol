@@ -1,5 +1,5 @@
 import type { DuplexByteStream } from "@khoralabs/obp-byte-stream";
-import type { NbcBindPolicyValidateFn } from "@khoralabs/obp-nbc";
+import type { HlcTimestamp, NbcBindPolicyValidateFn } from "@khoralabs/obp-nbc";
 import type { ObpPersistenceClient } from "@khoralabs/obp-persistence";
 import type { SessionOp } from "@khoralabs/obp-session-impl";
 import type { FrameDag } from "./frame-dag";
@@ -40,18 +40,10 @@ export type RunFrameMultiplexSessionArgs = {
   openerSession?: (api: FrameMultiplexOpenerApi) => Promise<void>;
   /** NBC N4 bind payload validation when inbound TURN carries an active **`bind_policy`**. */
   validateBindPayload?: NbcBindPolicyValidateFn | undefined;
-  /**
-   * When true, negotiation `Frame.body` values use ephemeral X25519 + AES-GCM after the
-   * signed END_OFFERS handshake (see `docs/FRAME_CHANNEL_E2EE.md`). Reference transports
-   * (`@khoralabs/obp-transport-ws`, `@khoralabs/obp-transport-http2`) enable this by default.
-   * Omit only for in-process tests or when TLS end-to-end trust is explicitly sufficient.
-   */
-  frameChannelBodyE2ee?: boolean;
-  /**
-   * HKDF domain separation for frame-body E2EE (e.g. room id). Never use the host room pairing secret.
-   * @see docs/FRAME_CHANNEL_E2EE.md
-   */
-  e2eeChannelBinding?: string;
+  /** Relay-client HLC effective now for NBC epoch bind windows. */
+  getEffectiveNowMs?: () => number | null;
+  /** Relay-client current HLC stamp for outbound TURN clock blocks. */
+  getCurrentHlc?: () => HlcTimestamp;
 };
 
 /** Per-chain mutable state inside {@link MultiplexSessionRuntime}. */

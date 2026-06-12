@@ -70,7 +70,7 @@ export async function applyNbcTurn(params: ApplyNbcTurnParams): Promise<ApplyNbc
       type: body.offer.type,
     },
     nbc_expires_turn: body.offer.expires_turn,
-    nbc_expires_at_relay_ms: body.offer.expires_at_relay_ms,
+    nbc_expires_at_ms: body.offer.expires_at_ms,
     bindPortId: "",
     bind_payload: null,
   });
@@ -83,7 +83,7 @@ export async function applyNbcTurn(params: ApplyNbcTurnParams): Promise<ApplyNbc
       offerId,
       port: nbcPortSpecToPort(spec),
       nbc_expires_turn: spec.expires_turn,
-      nbc_expires_at_relay_ms: spec.expires_at_relay_ms,
+      nbc_expires_at_ms: spec.expires_at_ms,
       bind_policy: spec.bind_policy ?? null,
       max_bindings: spec.max_bindings,
       terminal: spec.terminal,

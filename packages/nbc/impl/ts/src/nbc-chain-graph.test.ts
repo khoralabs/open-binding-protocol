@@ -10,7 +10,6 @@ describe("collectNbcChainGraph", () => {
       partyId: party.id,
       offer: { id: "", type: "opening" },
       nbc_expires_turn: 99,
-      nbc_expires_at_relay_ms: 0,
       bindPortId: "",
       bind_payload: null,
     });
@@ -23,7 +22,6 @@ describe("collectNbcChainGraph", () => {
         ref: "",
       },
       nbc_expires_turn: 99,
-      nbc_expires_at_relay_ms: 0,
       bind_policy: {
         type: "object",
         additionalProperties: false,
@@ -35,7 +33,7 @@ describe("collectNbcChainGraph", () => {
     });
 
     const g = await collectNbcChainGraph(client, {
-      timing: { turnSeq: 1, relayTsMs: 1 },
+      timing: { turnSeq: 1 },
     });
 
     expect(g.parties.some((p) => p.id === party.id)).toBe(true);

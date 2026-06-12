@@ -9,7 +9,7 @@ structure Party {
     name: String
 }
 
-/// Proposal or workflow step — **identity** and open **`type`**. NBC bind-window (**`expires_turn`** / **`expires_at_relay_ms`**) is **not** a core graph field: it lives on **`khora.obp.nbc`** TURN wire (`NbcOfferSpec`) and on the **`ObpPersistence`** NBC projection columns (**`nbc_expires_*`**, see **`khora.obp#ExtendOfferInput`**). Row **`created_seq`** is NBC / persistence (**`khora.obp.nbc#NbcRowCommitMeta`**), not on this shape.
+/// Proposal or workflow step — **identity** and open **`type`**. NBC bind-window (**`expires_turn`** / **`expires_at_ms`**) is **not** a core graph field: it lives on **`khora.obp.nbc`** TURN wire (`NbcOfferSpec`) and on the **`ObpPersistence`** NBC projection columns (**`nbc_expires_*`**, see **`khora.obp#ExtendOfferInput`**). Row **`created_seq`** is NBC / persistence (**`khora.obp.nbc#NbcRowCommitMeta`**), not on this shape.
 structure Offer {
     id: String
     /// Open discriminator (domain-specific step name, e.g. workflow id).

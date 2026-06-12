@@ -1,6 +1,6 @@
-# `@khoralabs/duplex-byte-stream`
+# `@khoralabs/obp-byte-stream`
 
-Minimal `DuplexByteStream` interface and channel admission tickets for OBP transports and the frame relay hub.
+Minimal `DuplexByteStream` interface for OBP frame transports.
 
 ## Exports
 
@@ -28,27 +28,9 @@ Each read side buffers at most `DEFAULT_MAX_INBOUND_QUEUE_DEPTH` (256) chunks. W
 
 `createWebSocketDuplexByteStream` / `WebSocketDuplexByteSend` — wraps a WebSocket into a `DuplexByteStream`.
 
-### Channel admission tickets
-
-HMAC-SHA256 join proofs scoped to a channel ID. Used by `@khoralabs/obp-frame-relay` to admit peers.
-
-```ts
-import {
-  generateChannelSecretHex,
-  signChannelTicket,
-  verifyChannelTicket,
-} from "@khoralabs/duplex-byte-stream";
-
-const secret = generateChannelSecretHex();
-const ticket = await signChannelTicket(channelId, secret, {
-  expiresAtMs: Date.now() + 86_400_000,
-});
-const valid = await verifyChannelTicket(channelId, ticket, secret); // true
-```
-
-Wire format: `base64url(v1:{"cid","exp",...}).base64url(sig)`.
+Channel admission tickets and relay persistence live in the **relay** repo (`@khoralabs/relay-admission`, `@khoralabs/relay-server-http`).
 
 ## Scripts
 
-- `bun test` — channel ticket round-trip tests
+- `bun test`
 - `bun run typecheck` — `tsc --noEmit`

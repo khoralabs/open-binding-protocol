@@ -7,7 +7,7 @@ import { getBindablePortsForParty, isSessionAdvanceable, nbcNaturalStop } from "
 import { applyNbcTurn } from "./nbc-turn";
 import { parseNbcTurnBody, serializeNbcTurnBodyForWire } from "./nbc-types";
 
-const timing0 = { turnSeq: 0, relayTsMs: 1 } as const;
+const timing0 = { turnSeq: 0 } as const;
 
 const textBindSchema = {
   type: "object" as const,
@@ -32,7 +32,6 @@ describe("applyNbcTurn", () => {
       offer: {
         id: "",
         expires_turn: 100,
-        expires_at_relay_ms: 0,
         type: "step",
       },
       ports: [
@@ -41,7 +40,6 @@ describe("applyNbcTurn", () => {
           type: "slot",
           promise: "pick",
           expires_turn: 100,
-          expires_at_relay_ms: 0,
           bind_policy: null,
           ref: "",
         },
@@ -63,7 +61,6 @@ describe("applyNbcTurn", () => {
       offer: {
         id: "",
         expires_turn: 100,
-        expires_at_relay_ms: 0,
         type: "reply",
       },
       ports: [],
@@ -84,7 +81,6 @@ describe("applyNbcTurn", () => {
       offer: {
         id: "",
         expires_turn: 100,
-        expires_at_relay_ms: 0,
         type: "step",
       },
       ports: [
@@ -93,7 +89,6 @@ describe("applyNbcTurn", () => {
           type: "slot",
           promise: "pick",
           expires_turn: 100,
-          expires_at_relay_ms: 0,
           bind_policy: textBindSchema,
           ref: "",
         },
@@ -114,7 +109,6 @@ describe("applyNbcTurn", () => {
       offer: {
         id: "",
         expires_turn: 100,
-        expires_at_relay_ms: 0,
         type: "reply",
       },
       ports: [],
@@ -142,14 +136,13 @@ describe("applyNbcTurn", () => {
     const r1 = await applyNbcTurn({
       partyId: a.id,
       body: parseNbcTurnBody({
-        offer: { id: "", expires_turn: 100, expires_at_relay_ms: 0, type: "step" },
+        offer: { id: "", expires_turn: 100, type: "step" },
         ports: [
           {
             id: "race-port",
             type: "slot",
             promise: "p",
             expires_turn: 100,
-            expires_at_relay_ms: 0,
             bind_policy: null,
             ref: "",
             max_bindings: 1,
@@ -168,7 +161,7 @@ describe("applyNbcTurn", () => {
       applyNbcTurn({
         partyId,
         body: parseNbcTurnBody({
-          offer: { id: "", expires_turn: 100, expires_at_relay_ms: 0, type },
+          offer: { id: "", expires_turn: 100, type },
           ports: [],
           bind_port_id: portId,
           bind_payload: null,
@@ -197,14 +190,13 @@ describe("applyNbcTurn", () => {
     const r1 = await applyNbcTurn({
       partyId: a.id,
       body: parseNbcTurnBody({
-        offer: { id: "", expires_turn: 100, expires_at_relay_ms: 0, type: "step" },
+        offer: { id: "", expires_turn: 100, type: "step" },
         ports: [
           {
             id: "shared-port",
             type: "slot",
             promise: "p",
             expires_turn: 100,
-            expires_at_relay_ms: 0,
             bind_policy: null,
             ref: "",
             max_bindings: 1,
@@ -222,7 +214,7 @@ describe("applyNbcTurn", () => {
     await applyNbcTurn({
       partyId: b.id,
       body: parseNbcTurnBody({
-        offer: { id: "", expires_turn: 100, expires_at_relay_ms: 0, type: "o1" },
+        offer: { id: "", expires_turn: 100, type: "o1" },
         ports: [],
         bind_port_id: portId,
         bind_payload: null,
@@ -235,7 +227,7 @@ describe("applyNbcTurn", () => {
       applyNbcTurn({
         partyId: c.id,
         body: parseNbcTurnBody({
-          offer: { id: "", expires_turn: 100, expires_at_relay_ms: 0, type: "o2" },
+          offer: { id: "", expires_turn: 100, type: "o2" },
           ports: [],
           bind_port_id: portId,
           bind_payload: null,
@@ -257,7 +249,6 @@ describe("nbc session reads", () => {
       offer: {
         id: "",
         expires_turn: 100,
-        expires_at_relay_ms: 0,
         type: "step",
       },
       ports: [
@@ -266,7 +257,6 @@ describe("nbc session reads", () => {
           type: "x",
           promise: "",
           expires_turn: 100,
-          expires_at_relay_ms: 0,
           bind_policy: null,
           ref: "",
         },
@@ -296,7 +286,6 @@ describe("nbc session reads", () => {
       offer: {
         id: "",
         expires_turn: 100,
-        expires_at_relay_ms: 0,
         type: "step",
       },
       ports: [],
@@ -312,14 +301,14 @@ describe("nbc session reads", () => {
 describe("serializeNbcTurnBodyForWire", () => {
   test("emits canonical nested offer shape", () => {
     const body = parseNbcTurnBody({
-      offer: { id: "o1", type: "step", expires_turn: 1, expires_at_relay_ms: 2 },
+      offer: { id: "o1", type: "step", expires_turn: 1, expires_at_ms: 0 },
       ports: [],
       bind_port_id: "",
       bind_payload: null,
     });
     const wire = serializeNbcTurnBodyForWire(body);
     expect(wire).toEqual({
-      offer: { id: "o1", type: "step", expires_turn: 1, expires_at_relay_ms: 2 },
+      offer: { id: "o1", type: "step", expires_turn: 1, expires_at_ms: 0 },
       ports: [],
       bind_port_id: "",
       bind_payload: null,
@@ -333,7 +322,6 @@ describe("serializeNbcTurnBodyForWire", () => {
         offerId: "o1",
         offerType: "step",
         expires_turn: 1,
-        expires_at_relay_ms: 2,
         ports: [],
         bindPortId: "p1",
         bind_payload: { x: 1 },

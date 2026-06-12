@@ -3,7 +3,7 @@ import { validateNbcBindPayloadForPort } from "@khoralabs/nbc-bind-policy";
 import { ObpError } from "@khoralabs/obp-errors";
 import type { JsonDocument, Offer, Port } from "@khoralabs/obp-model";
 import { createInMemoryObpPersistenceClient } from "@khoralabs/obp-persistence";
-import { validateNbcBind, validateOutboundNbcTurnBind } from "./nbc-invariants";
+import { isEpochExpiryOk, validateNbcBind, validateOutboundNbcTurnBind } from "./nbc-invariants";
 import { resolveCanonicalPortId } from "./nbc-ref";
 import { parseNbcTurnBody } from "./nbc-types";
 
@@ -29,9 +29,9 @@ const textBindSchema = {
 
 const basePortFields = { type: "t" as const, promise: "" as const };
 
-const win = (turn: number, relay: number) => ({
+const win = (turn: number, epoch = 0) => ({
   nbc_expires_turn: turn,
-  nbc_expires_at_relay_ms: relay,
+  nbc_expires_at_ms: epoch,
 });
 
 const bindCap = {
@@ -90,11 +90,11 @@ describe("validateNbcBind", () => {
 
   test("N1 rejects expired offer (turn)", async () => {
     const r = await validateNbcBind({
-      timing: { turnSeq: 50, relayTsMs: 1 },
+      timing: { turnSeq: 50 },
       offer,
       port,
-      offerBindWindow: win(50, 0),
-      portBindWindow: win(100, 0),
+      offerBindWindow: win(50),
+      portBindWindow: win(100),
       portsById: ports,
       targetPortIsExposed: true,
       bindPolicy: null,
@@ -107,11 +107,11 @@ describe("validateNbcBind", () => {
 
   test("N1 skips when both expiry modes off", async () => {
     const r = await validateNbcBind({
-      timing: { turnSeq: 999, relayTsMs: 999 },
+      timing: { turnSeq: 999 },
       offer,
       port,
-      offerBindWindow: win(0, 0),
-      portBindWindow: win(0, 0),
+      offerBindWindow: win(0),
+      portBindWindow: win(0),
       portsById: ports,
       targetPortIsExposed: true,
       bindPolicy: null,
@@ -122,13 +122,13 @@ describe("validateNbcBind", () => {
     if (r.ok) expect(r.normalizedBindPayload).toBeNull();
   });
 
-  test("N1 rejects relay expiry without relay ts", async () => {
+  test("N1 rejects epoch expiry without effectiveNowMs", async () => {
     const r = await validateNbcBind({
-      timing: { turnSeq: 0, relayTsMs: 0 },
+      timing: { turnSeq: 0 },
       offer,
       port,
       offerBindWindow: win(0, 100),
-      portBindWindow: win(0, 0),
+      portBindWindow: win(0),
       portsById: ports,
       targetPortIsExposed: true,
       bindPolicy: null,
@@ -141,11 +141,11 @@ describe("validateNbcBind", () => {
 
   test("NOT_EXPOSED", async () => {
     const r = await validateNbcBind({
-      timing: { turnSeq: 0, relayTsMs: 1 },
+      timing: { turnSeq: 0 },
       offer,
       port,
-      offerBindWindow: win(100, 0),
-      portBindWindow: win(100, 0),
+      offerBindWindow: win(100),
+      portBindWindow: win(100),
       portsById: ports,
       targetPortIsExposed: false,
       bindPolicy: null,
@@ -158,11 +158,11 @@ describe("validateNbcBind", () => {
 
   test("N2 rejects when canonical bind cap reached", async () => {
     const r = await validateNbcBind({
-      timing: { turnSeq: 0, relayTsMs: 1 },
+      timing: { turnSeq: 0 },
       offer,
       port,
-      offerBindWindow: win(100, 0),
-      portBindWindow: win(100, 0),
+      offerBindWindow: win(100),
+      portBindWindow: win(100),
       portsById: ports,
       targetPortIsExposed: true,
       bindPolicy: null,
@@ -188,11 +188,11 @@ describe("validateNbcBind", () => {
       ["b", alias],
     ]);
     const r = await validateNbcBind({
-      timing: { turnSeq: 0, relayTsMs: 1 },
+      timing: { turnSeq: 0 },
       offer,
       port: alias,
-      offerBindWindow: win(100, 0),
-      portBindWindow: win(100, 0),
+      offerBindWindow: win(100),
+      portBindWindow: win(100),
       portsById: aliasPorts,
       targetPortIsExposed: true,
       bindPolicy: null,
@@ -206,11 +206,11 @@ describe("validateNbcBind", () => {
 
   test("N4 rejects bind_payload when no policy", async () => {
     const r = await validateNbcBind({
-      timing: { turnSeq: 0, relayTsMs: 1 },
+      timing: { turnSeq: 0 },
       offer,
       port,
-      offerBindWindow: win(100, 0),
-      portBindWindow: win(100, 0),
+      offerBindWindow: win(100),
+      portBindWindow: win(100),
       portsById: ports,
       targetPortIsExposed: true,
       bindPolicy: null,
@@ -223,11 +223,11 @@ describe("validateNbcBind", () => {
 
   test("N4 rejects invalid policy document (host validator)", async () => {
     const r = await validateNbcBind({
-      timing: { turnSeq: 0, relayTsMs: 1 },
+      timing: { turnSeq: 0 },
       offer,
       port,
-      offerBindWindow: win(100, 0),
-      portBindWindow: win(100, 0),
+      offerBindWindow: win(100),
+      portBindWindow: win(100),
       portsById: ports,
       targetPortIsExposed: true,
       bindPolicy: { required: true },
@@ -241,11 +241,11 @@ describe("validateNbcBind", () => {
 
   test("N4 rejects active bind_policy without host validator", async () => {
     const r = await validateNbcBind({
-      timing: { turnSeq: 0, relayTsMs: 1 },
+      timing: { turnSeq: 0 },
       offer,
       port,
-      offerBindWindow: win(100, 0),
-      portBindWindow: win(100, 0),
+      offerBindWindow: win(100),
+      portBindWindow: win(100),
       portsById: ports,
       targetPortIsExposed: true,
       bindPolicy: textBindSchema,
@@ -263,11 +263,11 @@ describe("validateNbcBind", () => {
 
   test("N4 success with schema bind_payload", async () => {
     const r = await validateNbcBind({
-      timing: { turnSeq: 0, relayTsMs: 1 },
+      timing: { turnSeq: 0 },
       offer,
       port,
-      offerBindWindow: win(100, 0),
-      portBindWindow: win(100, 0),
+      offerBindWindow: win(100),
+      portBindWindow: win(100),
       portsById: ports,
       targetPortIsExposed: true,
       bindPolicy: textBindSchema,
@@ -281,11 +281,11 @@ describe("validateNbcBind", () => {
 
   test("N4 rejects missing required field", async () => {
     const r = await validateNbcBind({
-      timing: { turnSeq: 0, relayTsMs: 1 },
+      timing: { turnSeq: 0 },
       offer,
       port,
-      offerBindWindow: win(100, 0),
-      portBindWindow: win(100, 0),
+      offerBindWindow: win(100),
+      portBindWindow: win(100),
       portsById: ports,
       targetPortIsExposed: true,
       bindPolicy: textBindSchema,
@@ -303,7 +303,7 @@ describe("validateOutboundNbcTurnBind", () => {
     const client = createInMemoryObpPersistenceClient();
     await validateOutboundNbcTurnBind({
       body: parseNbcTurnBody({
-        offer: { id: "o", type: "t", expires_turn: 0, expires_at_relay_ms: 0 },
+        offer: { id: "o", type: "t", expires_turn: 0 },
         ports: [],
         bind_port_id: "",
         bind_payload: null,
@@ -316,14 +316,13 @@ describe("validateOutboundNbcTurnBind", () => {
   test("rejects invalid bind_payload before send using same-turn bind_policy", async () => {
     const client = createInMemoryObpPersistenceClient();
     const body = parseNbcTurnBody({
-      offer: { id: "o", type: "t", expires_turn: 0, expires_at_relay_ms: 0 },
+      offer: { id: "o", type: "t", expires_turn: 0 },
       ports: [
         {
           id: "p1",
           type: "t",
           promise: "",
           expires_turn: 0,
-          expires_at_relay_ms: 0,
           bind_policy: textBindSchema,
           ref: "",
         },
@@ -347,7 +346,6 @@ describe("validateOutboundNbcTurnBind", () => {
       partyId: party.id,
       offer: { id: "o1", type: "t" },
       nbc_expires_turn: 0,
-      nbc_expires_at_relay_ms: 0,
       bindPortId: "",
       bind_payload: null,
     });
@@ -357,7 +355,7 @@ describe("validateOutboundNbcTurnBind", () => {
       bind_policy: textBindSchema,
     });
     const body = parseNbcTurnBody({
-      offer: { id: "", type: "t", expires_turn: 0, expires_at_relay_ms: 0 },
+      offer: { id: "", type: "t", expires_turn: 0, expires_at_ms: 0 },
       ports: [],
       bind_port_id: port.id,
       bind_payload: { greeting: "hi" },
@@ -367,5 +365,19 @@ describe("validateOutboundNbcTurnBind", () => {
       client,
       validateBindPayload: nbcBindValidate,
     });
+  });
+});
+
+describe("isEpochExpiryOk", () => {
+  test("fails closed without effectiveNowMs", () => {
+    expect(isEpochExpiryOk(1000, undefined)).toBe(false);
+  });
+
+  test("ok before epoch expiry", () => {
+    expect(isEpochExpiryOk(1000, 500)).toBe(true);
+  });
+
+  test("disabled when expires_at_ms is zero", () => {
+    expect(isEpochExpiryOk(0, undefined)).toBe(true);
   });
 });

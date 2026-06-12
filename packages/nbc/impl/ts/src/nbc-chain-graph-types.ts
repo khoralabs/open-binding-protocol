@@ -25,7 +25,7 @@ export type NbcChainOfferRow = {
   readonly id: string;
   readonly type: string;
   readonly expires_turn: number;
-  readonly expires_at_relay_ms: number;
+  readonly expires_at_ms: number;
   readonly partyId: string;
   readonly partyName?: string;
   readonly expired?: boolean;
@@ -38,7 +38,7 @@ export type NbcChainPortRow = {
   readonly promise: string;
   readonly ref: string;
   readonly expires_turn: number;
-  readonly expires_at_relay_ms: number;
+  readonly expires_at_ms: number;
   readonly exposedOnOfferIds: readonly string[];
   readonly bindCount: number;
   readonly expired?: boolean;

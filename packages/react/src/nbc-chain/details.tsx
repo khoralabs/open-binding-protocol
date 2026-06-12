@@ -1,7 +1,7 @@
 import type { NbcChainGraph } from "@khoralabs/obp-nbc";
 import type { Edge, Node } from "@xyflow/react";
 import type { ComponentProps } from "react";
-import { formatExpiresTurn, formatRelayMs } from "./format.ts";
+import { formatEpochMs, formatExpiresTurn } from "./format.ts";
 import type {
   NbcChainBindEdgeData,
   NbcChainOfferNodeData,
@@ -51,8 +51,8 @@ export function NbcChainNodeDetails({ node, graph, ...rest }: NbcChainNodeDetail
           <dd data-slot="nbc-chain-details-dd">{o.partyName ?? o.partyId ?? "—"}</dd>
           <dt data-slot="nbc-chain-details-dt">expires_turn</dt>
           <dd data-slot="nbc-chain-details-dd">{formatExpiresTurn(o.expires_turn)}</dd>
-          <dt data-slot="nbc-chain-details-dt">expires_at_relay_ms</dt>
-          <dd data-slot="nbc-chain-details-dd">{formatRelayMs(o.expires_at_relay_ms)}</dd>
+          <dt data-slot="nbc-chain-details-dt">expires_at_ms</dt>
+          <dd data-slot="nbc-chain-details-dd">{formatEpochMs(o.expires_at_ms)}</dd>
           <dt data-slot="nbc-chain-details-dt">Expired</dt>
           <dd data-slot="nbc-chain-details-dd">
             {o.expired === true ? "yes" : o.expired === false ? "no" : "—"}
@@ -124,8 +124,8 @@ export function NbcChainNodeDetails({ node, graph, ...rest }: NbcChainNodeDetail
           </dd>
           <dt data-slot="nbc-chain-details-dt">expires_turn</dt>
           <dd data-slot="nbc-chain-details-dd">{formatExpiresTurn(p.expires_turn)}</dd>
-          <dt data-slot="nbc-chain-details-dt">expires_at_relay_ms</dt>
-          <dd data-slot="nbc-chain-details-dd">{formatRelayMs(p.expires_at_relay_ms)}</dd>
+          <dt data-slot="nbc-chain-details-dt">expires_at_ms</dt>
+          <dd data-slot="nbc-chain-details-dd">{formatEpochMs(p.expires_at_ms)}</dd>
           <dt data-slot="nbc-chain-details-dt">Expired</dt>
           <dd data-slot="nbc-chain-details-dd">
             {p.expired === true ? "yes" : p.expired === false ? "no" : "—"}

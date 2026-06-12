@@ -3,6 +3,7 @@ $version: "2"
 namespace khora.obp.nbc
 
 use smithy.api#Document
+use khora.obp.nbc.clock#ClockBlock
 
 @documentation("""
 **Bilateral NBC turn payload** — JSON shape carried in **`khora.obp.frame#Frame.body`** for negotiation TURN frames when peers use the Negotiated Binding Convention in a **private two-party** session.
@@ -17,8 +18,8 @@ structure NbcOfferSpec {
     type: String
     /// Turn-based NBC bind window (N1). **`0`** disables this mode. Persisted as **`nbc_expires_turn`** on the offer row — **not** a field on **`khora.obp#Offer`**.
     expires_turn: Integer = 0
-    /// Relay-anchored time bind window (N1). **`0`** disables this mode. Persisted as **`nbc_expires_at_relay_ms`** — **not** on **`khora.obp#Offer`**.
-    expires_at_relay_ms: Long = 0
+    /// Peer epoch bind window (N1). **`0`** disables this mode. Persisted as **`nbc_expires_at_ms`** — evaluated with HLC **`effective_now_ms`** (`khora.obp.nbc.clock`).
+    expires_at_ms: Long = 0
 }
 
 structure NbcPortSpec {
@@ -30,8 +31,8 @@ structure NbcPortSpec {
     promise: String
     /// Turn-based NBC bind window (N1). **`0`** disables this mode. Persisted as **`nbc_expires_turn`** on the port row — **not** on **`khora.obp#Port`**.
     expires_turn: Integer = 0
-    /// Relay time bind window in ms since epoch (N1). **`0`** disables this mode. Persisted as **`nbc_expires_at_relay_ms`** — **not** on **`khora.obp#Port`**.
-    expires_at_relay_ms: Long = 0
+    /// Peer epoch bind window (N1). **`0`** disables. Persisted as **`nbc_expires_at_ms`**.
+    expires_at_ms: Long = 0
     /// JSON Schema (draft 2020-12) root object for **`bind_payload`** when non-empty (N4); Vellum validates with AJV. Deployments MAY use other shapes when their host validator agrees.
     bind_policy: Document = null
     /// When non-empty, aliases another port id for bind resolution (maps to **`khora.obp#Port.ref`**); implementations MUST detect cycles.
@@ -60,6 +61,8 @@ structure NbcTurnBody {
     bind_port_id: String
     /// Counterparty satisfaction payload when **`bind_port_id`** is set.
     bind_payload: Document = null
+    /// Optional peer clock block for DAG audit (`khora.obp.nbc.clock#ClockBlock`).
+    clock: ClockBlock
 }
 
 @documentation("""

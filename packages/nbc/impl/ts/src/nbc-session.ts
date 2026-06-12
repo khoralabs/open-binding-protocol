@@ -4,14 +4,14 @@
 
 import type { Port } from "@khoralabs/obp-model";
 import type { ObpNbcBindWindow, ObpPersistenceClient } from "@khoralabs/obp-persistence";
-import { isRelayExpiryOk, isTurnExpiryOk, type NbcBindTiming } from "./nbc-invariants";
+import { isEpochExpiryOk, isTurnExpiryOk, type NbcBindTiming } from "./nbc-invariants";
 
 export type BindablePortEntry = { portId: string; port: Port };
 
 function isNbcWindowBindableAt(w: ObpNbcBindWindow, t: NbcBindTiming): boolean {
   return (
     isTurnExpiryOk(w.nbc_expires_turn, t.turnSeq) &&
-    isRelayExpiryOk(w.nbc_expires_at_relay_ms, t.relayTsMs)
+    isEpochExpiryOk(w.nbc_expires_at_ms, t.effectiveNowMs)
   );
 }
 

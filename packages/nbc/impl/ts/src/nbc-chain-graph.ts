@@ -10,7 +10,7 @@ import type {
 } from "./nbc-chain-graph-types";
 import {
   isActiveBindPolicy,
-  isRelayExpiryOk,
+  isEpochExpiryOk,
   isTurnExpiryOk,
   type NbcBindTiming,
 } from "./nbc-invariants";
@@ -22,12 +22,12 @@ export type CollectNbcChainGraphOptions = {
 };
 
 function isNbcExpiryViewExpired(
-  node: { readonly expires_turn: number; readonly expires_at_relay_ms: number },
+  node: { readonly expires_turn: number; readonly expires_at_ms: number },
   t: NbcBindTiming,
 ): boolean {
   return !(
     isTurnExpiryOk(node.expires_turn, t.turnSeq) &&
-    isRelayExpiryOk(node.expires_at_relay_ms, t.relayTsMs)
+    isEpochExpiryOk(node.expires_at_ms, t.effectiveNowMs)
   );
 }
 
@@ -85,16 +85,16 @@ export async function collectNbcChainGraph(
       const o = result.offer;
       const win = await client.getNbcBindWindowForOfferOrNull(offerId);
       const expires_turn = win?.nbc_expires_turn ?? 0;
-      const expires_at_relay_ms = win?.nbc_expires_at_relay_ms ?? 0;
+      const expires_at_ms = win?.nbc_expires_at_ms ?? 0;
       const ext = extendsEdges.find((e) => e.offerId === offerId);
       const partyId = ext?.partyId ?? "";
       const partyName = partyId ? partyNameById.get(partyId) : undefined;
-      const expiryView = { expires_turn, expires_at_relay_ms };
+      const expiryView = { expires_turn, expires_at_ms };
       return {
         id: o.id,
         type: o.type,
         expires_turn,
-        expires_at_relay_ms,
+        expires_at_ms,
         partyId,
         partyName,
         ...(timing !== undefined ? { expired: isNbcExpiryViewExpired(expiryView, timing) } : {}),
@@ -125,8 +125,8 @@ export async function collectNbcChainGraph(
       }
       const win = await client.getNbcBindWindowForPortOrNull(portId);
       const expires_turn = win?.nbc_expires_turn ?? 0;
-      const expires_at_relay_ms = win?.nbc_expires_at_relay_ms ?? 0;
-      const expiryView = { expires_turn, expires_at_relay_ms };
+      const expires_at_ms = win?.nbc_expires_at_ms ?? 0;
+      const expiryView = { expires_turn, expires_at_ms };
       const resolved = resolveCanonicalPortId(portsById, portId);
       const canonicalId = resolved.ok ? resolved.canonicalId : portId;
       const bindCount = countBindsForCanonicalPort(binds, portsById, canonicalId);
@@ -137,7 +137,7 @@ export async function collectNbcChainGraph(
         promise: port.promise,
         ref: port.ref,
         expires_turn,
-        expires_at_relay_ms,
+        expires_at_ms,
         exposedOnOfferIds: Object.freeze([...(exposedByPort.get(portId) ?? [])]),
         bindCount,
         ...(timing !== undefined ? { expired: isNbcExpiryViewExpired(expiryView, timing) } : {}),
@@ -154,17 +154,16 @@ export async function collectNbcChainGraph(
   );
   ports.sort((a, b) => a.id.localeCompare(b.id));
 
-  extendsEdges.sort((a, b) => {
-    const c = a.offerId.localeCompare(b.offerId);
-    return c !== 0 ? c : a.partyId.localeCompare(b.partyId);
-  });
-
   return {
     parties,
-    extends: extendsEdges,
-    exposes,
-    binds,
     offers,
     ports,
+    extends: extendsEdges,
+    exposes,
+    binds: binds.map((b) => ({
+      offerId: b.offerId,
+      portId: b.portId,
+      bind_payload: b.bind_payload,
+    })),
   };
 }

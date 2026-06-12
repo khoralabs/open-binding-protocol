@@ -80,5 +80,5 @@ export type SessionEnvelopeWire = {
 /** Normative on-wire JSON objects in this namespace: **init** envelope or a **Frame**. */
 export type FramedWireObject = InitEnvelopeWire | Frame;
 
-/** Service version from `NegotiationFrameProtocol` in Smithy (includes frame-channel body E2EE baseline). */
+/** Service version from `NegotiationFrameProtocol` in Smithy. */
 export const NEGOTIATION_FRAME_PROTOCOL_VERSION = "2026-05-17" as const;

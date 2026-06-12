@@ -26,8 +26,8 @@ export type NbcBindFailure =
 export type NbcBindTiming = {
   /** DAG-committed frame count on this chain before applying the binding TURN. */
   turnSeq: number;
-  /** `relay_ts_ms` from `khora.obp.frame.relay#RelayEnvelope` when hub relay is in use; `0` when unset (direct / tests). */
-  relayTsMs: number;
+  /** HLC-derived conservative epoch ms for peer epoch mode; `undefined` when not available (fail closed). */
+  effectiveNowMs?: number;
 };
 
 /**
@@ -69,11 +69,14 @@ export function isTurnExpiryOk(expires_turn: number, turnSeq: number): boolean {
   return turnSeq < expires_turn;
 }
 
-/** N1 relay mode: bindable when **`expires_at_relay_ms === 0`** or **`relayTsMs < expires_at_relay_ms`**. */
-export function isRelayExpiryOk(expires_at_relay_ms: number, relayTsMs: number): boolean {
-  if (expires_at_relay_ms === 0) return true;
-  if (relayTsMs === 0) return false;
-  return relayTsMs < expires_at_relay_ms;
+/** N1 epoch mode: bindable when **`expires_at_ms === 0`** or **`effectiveNowMs < expires_at_ms`**. */
+export function isEpochExpiryOk(
+  expires_at_ms: number,
+  effectiveNowMs: number | undefined,
+): boolean {
+  if (expires_at_ms === 0) return true;
+  if (effectiveNowMs === undefined) return false;
+  return effectiveNowMs < expires_at_ms;
 }
 
 /** True when **`bind_policy`** is a non-empty object (N4 applies). */
@@ -111,7 +114,7 @@ export type CheckNbcBindAdmissionInput = {
 /** Sync NBC admission checks (N1, N2/N5, N3, NOT_EXPOSED) against a store snapshot. */
 export function checkNbcBindAdmission(input: CheckNbcBindAdmissionInput): NbcBindFailure | null {
   const { timing, offerId, portId, snapshot } = input;
-  const { turnSeq, relayTsMs } = timing;
+  const { turnSeq, effectiveNowMs } = timing;
   const { portsById, binds, exposedPortIds, offerNbcById, portNbcById, portExposePolicyById } =
     snapshot;
 
@@ -131,13 +134,13 @@ export function checkNbcBindAdmission(input: CheckNbcBindAdmissionInput): NbcBin
   if (!isTurnExpiryOk(offerBindWindow.nbc_expires_turn, turnSeq)) {
     return { code: "EXPIRED", entity: "offer" };
   }
-  if (!isRelayExpiryOk(offerBindWindow.nbc_expires_at_relay_ms, relayTsMs)) {
+  if (!isEpochExpiryOk(offerBindWindow.nbc_expires_at_ms, effectiveNowMs)) {
     return { code: "EXPIRED", entity: "offer" };
   }
   if (!isTurnExpiryOk(portBindWindow.nbc_expires_turn, turnSeq)) {
     return { code: "EXPIRED", entity: "port" };
   }
-  if (!isRelayExpiryOk(portBindWindow.nbc_expires_at_relay_ms, relayTsMs)) {
+  if (!isEpochExpiryOk(portBindWindow.nbc_expires_at_ms, effectiveNowMs)) {
     return { code: "EXPIRED", entity: "port" };
   }
 

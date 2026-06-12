@@ -53,14 +53,8 @@ export class InMemoryObpPersistenceStrategy implements ObpPersistenceStrategy {
   private parties = new Map<string, Party>();
   private offers = new Map<string, Offer>();
   private ports = new Map<string, Port>();
-  private offerNbc = new Map<
-    string,
-    { nbc_expires_turn: number; nbc_expires_at_relay_ms: number }
-  >();
-  private portNbc = new Map<
-    string,
-    { nbc_expires_turn: number; nbc_expires_at_relay_ms: number }
-  >();
+  private offerNbc = new Map<string, { nbc_expires_turn: number; nbc_expires_at_ms: number }>();
+  private portNbc = new Map<string, { nbc_expires_turn: number; nbc_expires_at_ms: number }>();
   private extends = new Map<string, string>();
   private exposes: ExposedPortEdge[] = [];
   /** NBC expose-time bind_policy snapshot per port id (`null` when inactive). */
@@ -128,10 +122,9 @@ export class InMemoryObpPersistenceStrategy implements ObpPersistenceStrategy {
     this.offers.set(offer.id, offer);
     this.extends.set(offer.id, input.partyId);
     const nt = input.nbc_expires_turn ?? 0;
-    const nm = input.nbc_expires_at_relay_ms ?? 0;
     this.offerNbc.set(offer.id, {
       nbc_expires_turn: nt,
-      nbc_expires_at_relay_ms: nm,
+      nbc_expires_at_ms: input.nbc_expires_at_ms ?? 0,
     });
     const bindPortId = input.bindPortId.trim();
     if (bindPortId !== "") {
@@ -192,10 +185,9 @@ export class InMemoryObpPersistenceStrategy implements ObpPersistenceStrategy {
     });
     this.exposes.push({ offerId: input.offerId, portId: port.id });
     const nt = input.nbc_expires_turn ?? 0;
-    const nm = input.nbc_expires_at_relay_ms ?? 0;
     this.portNbc.set(port.id, {
       nbc_expires_turn: nt,
-      nbc_expires_at_relay_ms: nm,
+      nbc_expires_at_ms: input.nbc_expires_at_ms ?? 0,
     });
     return { port };
   }
@@ -269,7 +261,7 @@ export class InMemoryObpPersistenceStrategy implements ObpPersistenceStrategy {
     if (!this.offers.has(input.offerId)) return { result: { kind: "notFound" } };
     const w = this.offerNbc.get(input.offerId) ?? {
       nbc_expires_turn: 0,
-      nbc_expires_at_relay_ms: 0,
+      nbc_expires_at_ms: 0,
     };
     return { result: { kind: "window", window: w } };
   }
@@ -280,7 +272,7 @@ export class InMemoryObpPersistenceStrategy implements ObpPersistenceStrategy {
     if (!this.ports.has(input.portId)) return { result: { kind: "notFound" } };
     const w = this.portNbc.get(input.portId) ?? {
       nbc_expires_turn: 0,
-      nbc_expires_at_relay_ms: 0,
+      nbc_expires_at_ms: 0,
     };
     return { result: { kind: "window", window: w } };
   }
@@ -290,7 +282,7 @@ export class InMemoryObpPersistenceStrategy implements ObpPersistenceStrategy {
     if (!port) return {};
     this.portNbc.set(input.portId, {
       nbc_expires_turn: 0,
-      nbc_expires_at_relay_ms: 1,
+      nbc_expires_at_ms: 1,
     });
     return {};
   }
@@ -300,7 +292,7 @@ export class InMemoryObpPersistenceStrategy implements ObpPersistenceStrategy {
     if (offer) {
       this.offerNbc.set(input.offerId, {
         nbc_expires_turn: 0,
-        nbc_expires_at_relay_ms: 1,
+        nbc_expires_at_ms: 1,
       });
     }
     for (const edge of this.exposes) {
@@ -308,7 +300,7 @@ export class InMemoryObpPersistenceStrategy implements ObpPersistenceStrategy {
       if (this.ports.has(edge.portId)) {
         this.portNbc.set(edge.portId, {
           nbc_expires_turn: 0,
-          nbc_expires_at_relay_ms: 1,
+          nbc_expires_at_ms: 1,
         });
       }
     }

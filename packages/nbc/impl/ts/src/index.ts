@@ -16,10 +16,23 @@ export {
   parseNbcFrameTurnBody,
 } from "./nbc-graph-effect";
 export {
+  type ClockBlock,
+  type ClockObservation,
+  conservativeEffectiveNow,
+  createHlcState,
+  estimateSkewMs,
+  HLC_MAX_SKEW_MS,
+  HLC_MIN_SAMPLES,
+  type HlcState,
+  type HlcTimestamp,
+  recvHlc,
+  sendHlc,
+} from "./nbc-hlc";
+export {
   type CheckNbcBindAdmissionInput,
   checkNbcBindAdmission,
   isActiveBindPolicy,
-  isRelayExpiryOk,
+  isEpochExpiryOk,
   isTurnExpiryOk,
   localBindPoliciesFromTurnPorts,
   type NbcBindFailure,

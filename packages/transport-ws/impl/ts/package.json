@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@khoralabs/obp-byte-stream": "workspace:*",
+    "@khoralabs/obp-nbc": "workspace:*",
     "@khoralabs/obp-errors": "workspace:*",
     "@khoralabs/obp-frames-impl": "workspace:*",
     "@khoralabs/obp-persistence": "workspace:*",

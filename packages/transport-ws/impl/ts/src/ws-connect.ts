@@ -15,6 +15,7 @@ import {
   runFrameMultiplexSession,
   type SessionInitNormalized,
 } from "@khoralabs/obp-frames-impl";
+import type { HlcTimestamp } from "@khoralabs/obp-nbc";
 import type { ObpPersistenceClient } from "@khoralabs/obp-persistence";
 import {
   type Checkpoint,
@@ -33,11 +34,8 @@ export type ObpFrameChannelClientOptions = {
   /** Multiplex lifecycle hooks (e.g. {@link FrameSessionHandlers.onSessionReady} for inbound SessionInit). */
   handlers?: FrameSessionHandlers;
   validateBindPayload?: RunFrameMultiplexSessionArgs["validateBindPayload"];
-  /**
-   * Optional HKDF binding (e.g. room id). Never derived from the host room ticket secret.
-   * Frame bodies are always E2EE on this WebSocket entrypoint.
-   */
-  e2eeChannelBinding?: string;
+  getEffectiveNowMs?: () => number | null;
+  getCurrentHlc?: () => HlcTimestamp;
 };
 
 export type ObpWebSocketConnectOptions = Omit<ObpFrameChannelClientOptions, "channel"> & {
@@ -77,14 +75,14 @@ export async function connectObpFrameChannelSession(
     verifier,
     client: options.client,
     handlers,
-    frameChannelBodyE2ee: true,
-    ...(options.e2eeChannelBinding !== undefined
-      ? { e2eeChannelBinding: options.e2eeChannelBinding }
-      : {}),
     ...(sessionEnvelopeSync !== undefined ? { sessionEnvelopeSync } : {}),
     ...(options.validateBindPayload !== undefined
       ? { validateBindPayload: options.validateBindPayload }
       : {}),
+    ...(options.getEffectiveNowMs !== undefined
+      ? { getEffectiveNowMs: options.getEffectiveNowMs }
+      : {}),
+    ...(options.getCurrentHlc !== undefined ? { getCurrentHlc: options.getCurrentHlc } : {}),
     openerSession: async (api) => {
       const conn: ObpFrameConnection = {
         async init(init, hooks) {

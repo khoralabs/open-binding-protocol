@@ -8,7 +8,7 @@ const MAX_DECODER_BUFFER_BYTES = MAX_FRAME_BYTES + 4;
 
 export type FrameDecoderYield =
   | { kind: "init"; value: unknown }
-  | { kind: "frame"; value: Frame; wireUtf8: string; relayTsMs?: number }
+  | { kind: "frame"; value: Frame; wireUtf8: string }
   | { kind: "session_envelope"; value: SessionEnvelopeWire }
   | { kind: "raw"; value: unknown };
 
@@ -83,22 +83,6 @@ export function createFrameDecoder(): {
     if (isRecord(value) && "init" in value) {
       return { kind: "init", value };
     }
-    if (isRelayEnvelopeWire(value) && isNegotiationFrameObject(value.frame)) {
-      const frame = value.frame;
-      const relayRaw = value.relay_ts_ms;
-      const relayTsMs =
-        typeof relayRaw === "number" && Number.isFinite(relayRaw)
-          ? relayRaw
-          : typeof relayRaw === "string" && /^-?\d+$/.test(relayRaw.trim())
-            ? Number(relayRaw.trim())
-            : NaN;
-      return {
-        kind: "frame",
-        value: frame,
-        wireUtf8: canonicalJsonString(frame),
-        ...(Number.isFinite(relayTsMs) ? { relayTsMs } : {}),
-      };
-    }
     if (isNegotiationFrameObject(value)) {
       return { kind: "frame", value: value as Frame, wireUtf8: canonicalJsonString(value) };
     }
@@ -141,12 +125,6 @@ export function isNegotiationFrameObject(v: unknown): v is Frame {
     v.body !== null &&
     !Array.isArray(v.body)
   );
-}
-
-function isRelayEnvelopeWire(v: unknown): v is { frame: unknown; relay_ts_ms: unknown } {
-  if (!isRecord(v)) return false;
-  if (!("frame" in v) || !("relay_ts_ms" in v)) return false;
-  return true;
 }
 
 function isCheckpointRecord(v: unknown): v is SessionEnvelopeWire["base_checkpoint"] {

@@ -4,6 +4,7 @@
  */
 
 import type { JsonDocument, Port } from "@khoralabs/obp-model";
+import type { ClockBlock, HlcTimestamp } from "./nbc-hlc";
 
 /** Service version from `NbcNegotiationProtocol` in Smithy. */
 export const NBC_NEGOTIATION_PROTOCOL_VERSION = "2026-05-14" as const;
@@ -13,7 +14,7 @@ export type NbcOfferSpec = {
   id: string;
   type: string;
   expires_turn: number;
-  expires_at_relay_ms: number;
+  expires_at_ms: number;
 };
 
 /** Affordance spec in an NBC TURN (maps to `ExposePort` + thin `khora.obp#Port`). */
@@ -22,7 +23,7 @@ export type NbcPortSpec = {
   type: string;
   promise: string;
   expires_turn: number;
-  expires_at_relay_ms: number;
+  expires_at_ms: number;
   bind_policy: JsonDocument | null;
   ref: string;
   /** NBC N2 bind capacity; omitted on wire defaults to **1** at expose. */
@@ -37,6 +38,7 @@ export type NbcTurnBody = {
   ports: readonly NbcPortSpec[];
   bind_port_id: string;
   bind_payload: JsonDocument | null;
+  clock?: ClockBlock;
 };
 
 function isRecord(x: unknown): x is Record<string, unknown> {
@@ -58,12 +60,45 @@ function toNonnegInt(v: unknown, field: string): number {
   return n;
 }
 
-function toRelayMs(v: unknown, field: string): number {
+function toEpochMs(v: unknown, field: string): number {
   if (v === undefined || v === null) return 0;
   const n = toFiniteNumber(v, field);
   if (!Number.isInteger(n)) throw new TypeError(`${field}: expected integer`);
-  if (n < 0) throw new TypeError(`${field}: expected non-negative relay ms`);
+  if (n < 0) throw new TypeError(`${field}: expected non-negative epoch ms`);
   return n;
+}
+
+function parseHlcTimestamp(v: unknown, field: string): HlcTimestamp {
+  if (!isRecord(v)) throw new TypeError(`${field}: expected object`);
+  const pt = toNonnegInt(v.pt, `${field}.pt`);
+  const lc = toNonnegInt(v.lc, `${field}.lc`);
+  return { pt, lc };
+}
+
+function parseClockBlock(v: unknown): ClockBlock | undefined {
+  if (v === undefined || v === null) return undefined;
+  if (!isRecord(v)) throw new TypeError("clock: expected object");
+  const hlc = parseHlcTimestamp(v.hlc, "clock.hlc");
+  let observed: ClockBlock["observed"];
+  if (v.observed !== undefined && v.observed !== null) {
+    const o = v.observed;
+    if (!isRecord(o)) throw new TypeError("clock.observed: expected object");
+    if (
+      typeof o.p_hash !== "string" ||
+      typeof o.peer_actor !== "string" ||
+      typeof o.peer_pt !== "number" ||
+      typeof o.recv_ms !== "number"
+    ) {
+      throw new TypeError("clock.observed: invalid shape");
+    }
+    observed = {
+      p_hash: o.p_hash,
+      peer_actor: o.peer_actor,
+      peer_pt: o.peer_pt,
+      recv_ms: o.recv_ms,
+    };
+  }
+  return { hlc, ...(observed !== undefined ? { observed } : {}) };
 }
 
 function parseNbcOfferSpec(v: unknown): NbcOfferSpec {
@@ -73,8 +108,8 @@ function parseNbcOfferSpec(v: unknown): NbcOfferSpec {
   if (typeof id !== "string") throw new TypeError("offer.id: expected string");
   if (typeof type !== "string") throw new TypeError("offer.type: expected string");
   const expires_turn = toNonnegInt(v.expires_turn, "offer.expires_turn");
-  const expires_at_relay_ms = toRelayMs(v.expires_at_relay_ms, "offer.expires_at_relay_ms");
-  return { id, type, expires_turn, expires_at_relay_ms };
+  const expires_at_ms = toEpochMs(v.expires_at_ms, "offer.expires_at_ms");
+  return { id, type, expires_turn, expires_at_ms };
 }
 
 function parseNbcPortSpec(v: unknown): NbcPortSpec {
@@ -85,7 +120,7 @@ function parseNbcPortSpec(v: unknown): NbcPortSpec {
   if (typeof type !== "string") throw new TypeError("NbcPortSpec.type: expected string");
   const promise = typeof v.promise === "string" ? v.promise : "";
   const expires_turn = toNonnegInt(v.expires_turn, "NbcPortSpec.expires_turn");
-  const expires_at_relay_ms = toRelayMs(v.expires_at_relay_ms, "NbcPortSpec.expires_at_relay_ms");
+  const expires_at_ms = toEpochMs(v.expires_at_ms, "NbcPortSpec.expires_at_ms");
   const ref = typeof v.ref === "string" ? v.ref : "";
   let bind_policy: JsonDocument | null = null;
   if ("bind_policy" in v) {
@@ -109,7 +144,7 @@ function parseNbcPortSpec(v: unknown): NbcPortSpec {
     type,
     promise,
     expires_turn,
-    expires_at_relay_ms,
+    expires_at_ms,
     bind_policy,
     ref,
     ...(max_bindings !== undefined ? { max_bindings } : {}),
@@ -139,7 +174,15 @@ export function parseNbcTurnBody(v: unknown): NbcTurnBody {
     else bind_payload = bp as JsonDocument;
   }
 
-  return { offer, ports, bind_port_id, bind_payload };
+  const clock = parseClockBlock(v.clock);
+
+  return {
+    offer,
+    ports,
+    bind_port_id,
+    bind_payload,
+    ...(clock !== undefined ? { clock } : {}),
+  };
 }
 
 export function isNbcTurnBody(v: unknown): v is NbcTurnBody {
@@ -151,7 +194,7 @@ export function isNbcTurnBody(v: unknown): v is NbcTurnBody {
   }
 }
 
-function relayMsForWire(n: number): number | string {
+function epochMsForWire(n: number): number | string {
   return n <= Number.MAX_SAFE_INTEGER && n >= Number.MIN_SAFE_INTEGER ? n : String(n);
 }
 
@@ -162,14 +205,14 @@ export function serializeNbcTurnBodyForWire(body: NbcTurnBody): Record<string, u
       id: body.offer.id,
       type: body.offer.type,
       expires_turn: body.offer.expires_turn,
-      expires_at_relay_ms: relayMsForWire(body.offer.expires_at_relay_ms),
+      expires_at_ms: epochMsForWire(body.offer.expires_at_ms),
     },
     ports: body.ports.map((p) => ({
       id: p.id,
       type: p.type,
       promise: p.promise,
       expires_turn: p.expires_turn,
-      expires_at_relay_ms: relayMsForWire(p.expires_at_relay_ms),
+      expires_at_ms: epochMsForWire(p.expires_at_ms),
       bind_policy: p.bind_policy,
       ref: p.ref,
       ...(p.max_bindings !== undefined ? { max_bindings: p.max_bindings } : {}),
@@ -177,6 +220,7 @@ export function serializeNbcTurnBodyForWire(body: NbcTurnBody): Record<string, u
     })),
     bind_port_id: body.bind_port_id,
     bind_payload: body.bind_payload,
+    ...(body.clock !== undefined ? { clock: body.clock } : {}),
   };
 }
 

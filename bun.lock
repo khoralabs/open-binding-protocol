@@ -45,9 +45,6 @@
         "typescript": "^5",
       },
     },
-    "packages/frame-relay/spec": {
-      "name": "@khoralabs/obp-frame-relay-spec",
-    },
     "packages/frames/impl/ts": {
       "name": "@khoralabs/obp-frames-impl",
       "version": "0.0.0",
@@ -246,6 +243,7 @@
         "@khoralabs/obp-byte-stream": "workspace:*",
         "@khoralabs/obp-errors": "workspace:*",
         "@khoralabs/obp-frames-impl": "workspace:*",
+        "@khoralabs/obp-nbc": "workspace:*",
         "@khoralabs/obp-persistence": "workspace:*",
         "@khoralabs/obp-session-impl": "workspace:*",
       },
@@ -281,8 +279,6 @@
     "@khoralabs/obp-byte-stream": ["@khoralabs/obp-byte-stream@workspace:packages/obp-byte-stream"],
 
     "@khoralabs/obp-errors": ["@khoralabs/obp-errors@workspace:packages/errors/impl/ts"],
-
-    "@khoralabs/obp-frame-relay-spec": ["@khoralabs/obp-frame-relay-spec@workspace:packages/frame-relay/spec"],
 
     "@khoralabs/obp-frames-impl": ["@khoralabs/obp-frames-impl@workspace:packages/frames/impl/ts"],
 

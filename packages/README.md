@@ -35,10 +35,7 @@ flowchart LR
 | `transport-http2/spec` | `@khoralabs/obp-transport-http2-spec` | HTTP/2 reference binding | `model/frame-binding-http2.smithy` |
 | `transport-http2/impl/ts` | `@khoralabs/obp-transport-http2` | HTTP/2 transport | — |
 | `transport-ws/impl/ts` | `@khoralabs/obp-transport-ws` | WebSocket transport | — |
-| `frame-relay/spec` | `@khoralabs/obp-frame-relay-spec` | `RelayEnvelope` + `FrameRelayStore` service | `model/hub-protocol.smithy` |
-| `frame-relay/impl/ts` | `@khoralabs/obp-frame-relay` | Hub runtime, store strategy port, Bun WS helpers | — |
-| `frame-relay/sqlite` | `@khoralabs/obp-frame-relay-sqlite` | SQLite `FrameRelayStoreStrategy` | — |
-| `duplex-byte-stream` | `@khoralabs/duplex-byte-stream` | `DuplexByteStream` interface, channel admission tickets | — |
+| `obp-byte-stream` | `@khoralabs/obp-byte-stream` | `DuplexByteStream` interface, WS adapter | — |
 | `react` | `@khoralabs/obp-react` | React NBC chain visualization (XYFlow) | — |
 | `errors/impl/ts` | `@khoralabs/obp-errors` | Shared `ObpError` / `ObpErrorCode` | — |
 
@@ -79,11 +76,9 @@ flowchart TB
   framesSpec[frames/spec]
   sessionSpec[session/spec]
   http2Spec[transport-http2/spec]
-  relaySpec[frame-relay/spec]
   modelSpec --> persistSpec
   modelSpec --> framesSpec
   persistSpec --> nbcSpec
   framesSpec --> sessionSpec
   framesSpec --> http2Spec
-  framesSpec --> relaySpec
 ```

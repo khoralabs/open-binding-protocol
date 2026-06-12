@@ -36,9 +36,7 @@ A stack may be OBP-conformant without NBC. NBC is a named additive conformance l
 | `@khoralabs/obp-session-impl` | Session Merkle checkpoints, `SessionEnvelope` verification |
 | `@khoralabs/obp-transport-http2` | HTTP/2 reference transport binding |
 | `@khoralabs/obp-transport-ws` | WebSocket transport binding |
-| `@khoralabs/obp-frame-relay` | Ticket-gated hub relay for OBP byte streams |
-| `@khoralabs/obp-frame-relay-sqlite` | SQLite strategy for `FrameRelayStoreStrategy` |
-| `@khoralabs/duplex-byte-stream` | `DuplexByteStream` interface, channel admission tickets (HMAC) |
+| `@khoralabs/obp-byte-stream` | `DuplexByteStream` interface, in-memory and WebSocket adapters |
 | `@khoralabs/obp-react` | React NBC chain visualization (XYFlow) |
 | `@khoralabs/obp-errors` | Shared `ObpError` / `ObpErrorCode` |
 

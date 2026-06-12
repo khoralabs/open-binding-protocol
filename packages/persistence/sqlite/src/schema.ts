@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS obp_offers (
   id TEXT PRIMARY KEY NOT NULL,
   created_seq INTEGER NOT NULL,
   nbc_expires_turn INTEGER NOT NULL,
-  nbc_expires_at_relay_ms INTEGER NOT NULL,
+  nbc_expires_at_ms INTEGER NOT NULL DEFAULT 0,
   type TEXT NOT NULL
 );
 
@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS obp_ports (
   id TEXT PRIMARY KEY NOT NULL,
   created_seq INTEGER NOT NULL,
   nbc_expires_turn INTEGER NOT NULL,
-  nbc_expires_at_relay_ms INTEGER NOT NULL,
+  nbc_expires_at_ms INTEGER NOT NULL DEFAULT 0,
   type TEXT NOT NULL,
   promise TEXT NOT NULL DEFAULT '',
   max_bindings INTEGER NOT NULL,

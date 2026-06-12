@@ -260,7 +260,7 @@ describe("SqliteObpPersistenceStrategy", () => {
     expect(pw.result.kind).toBe("window");
     if (pw.result.kind === "window") {
       expect(pw.result.window.nbc_expires_turn).toBe(0);
-      expect(pw.result.window.nbc_expires_at_relay_ms).toBe(1);
+      expect(pw.result.window.nbc_expires_at_ms).toBe(1);
     }
   });
 });

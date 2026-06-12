@@ -58,7 +58,7 @@ type OfferRow = {
   id: string;
   created_seq: number;
   nbc_expires_turn: number;
-  nbc_expires_at_relay_ms: number;
+  nbc_expires_at_ms: number;
   type: string;
 };
 
@@ -66,7 +66,7 @@ type PortRow = {
   id: string;
   created_seq: number;
   nbc_expires_turn: number;
-  nbc_expires_at_relay_ms: number;
+  nbc_expires_at_ms: number;
   type: string;
   promise: string | null;
   max_bindings: number;
@@ -141,16 +141,16 @@ export class SqliteObpPersistenceStrategy implements ObpPersistenceStrategy {
       `INSERT INTO obp_parties (id, created_seq, name) VALUES (?, ?, ?)`,
     );
     this.updatePortExpiresNow = db.prepare(
-      `UPDATE obp_ports SET nbc_expires_turn = ?, nbc_expires_at_relay_ms = ? WHERE id = ?`,
+      `UPDATE obp_ports SET nbc_expires_turn = ?, nbc_expires_at_ms = ? WHERE id = ?`,
     );
     this.updateOfferExpiresNow = db.prepare(
-      `UPDATE obp_offers SET nbc_expires_turn = ?, nbc_expires_at_relay_ms = ? WHERE id = ?`,
+      `UPDATE obp_offers SET nbc_expires_turn = ?, nbc_expires_at_ms = ? WHERE id = ?`,
     );
     this.updatePortsExpiresNowForOffer = db.prepare(
-      `UPDATE obp_ports SET nbc_expires_turn = ?, nbc_expires_at_relay_ms = ? WHERE id IN (SELECT port_id FROM obp_exposes WHERE offer_id = ?)`,
+      `UPDATE obp_ports SET nbc_expires_turn = ?, nbc_expires_at_ms = ? WHERE id IN (SELECT port_id FROM obp_exposes WHERE offer_id = ?)`,
     );
     this.insertOffer = db.prepare(
-      `INSERT INTO obp_offers (id, created_seq, nbc_expires_turn, nbc_expires_at_relay_ms, type) VALUES (?, ?, ?, ?, ?)`,
+      `INSERT INTO obp_offers (id, created_seq, nbc_expires_turn, nbc_expires_at_ms, type) VALUES (?, ?, ?, ?, ?)`,
     );
     this.insertExtend = db.prepare(
       `INSERT INTO obp_extends (edge_id, party_id, offer_id, created_seq) VALUES (?, ?, ?, ?)`,
@@ -159,7 +159,7 @@ export class SqliteObpPersistenceStrategy implements ObpPersistenceStrategy {
       `INSERT INTO obp_binds (edge_id, offer_id, port_id, created_seq, counterparty_bind_json) VALUES (?, ?, ?, ?, ?)`,
     );
     this.insertPort = db.prepare(
-      `INSERT INTO obp_ports (id, created_seq, nbc_expires_turn, nbc_expires_at_relay_ms, type, promise, max_bindings, terminal, ref, ttl_basis, ttl_measure, expose_seq, bind_policy_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO obp_ports (id, created_seq, nbc_expires_turn, nbc_expires_at_ms, type, promise, max_bindings, terminal, ref, ttl_basis, ttl_measure, expose_seq, bind_policy_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     );
     this.insertExpose = db.prepare(
       `INSERT INTO obp_exposes (edge_id, offer_id, port_id, created_seq) VALUES (?, ?, ?, ?)`,
@@ -192,7 +192,7 @@ export class SqliteObpPersistenceStrategy implements ObpPersistenceStrategy {
   async getOffer(input: GetOfferInput): Promise<GetOfferOutput> {
     const row = this.db
       .query<OfferRow, [string]>(
-        `SELECT id, created_seq, nbc_expires_turn, nbc_expires_at_relay_ms, type FROM obp_offers WHERE id = ?`,
+        `SELECT id, created_seq, nbc_expires_turn, nbc_expires_at_ms, type FROM obp_offers WHERE id = ?`,
       )
       .get(input.id);
     if (!row) return { result: { kind: "notFound" } };
@@ -202,7 +202,7 @@ export class SqliteObpPersistenceStrategy implements ObpPersistenceStrategy {
   async getPort(input: GetPortInput): Promise<GetPortOutput> {
     const row = this.db
       .query<PortRow, [string]>(
-        `SELECT id, created_seq, nbc_expires_turn, nbc_expires_at_relay_ms, type, promise, max_bindings, terminal, ref, ttl_basis, ttl_measure, expose_seq, bind_policy_json FROM obp_ports WHERE id = ?`,
+        `SELECT id, created_seq, nbc_expires_turn, nbc_expires_at_ms, type, promise, max_bindings, terminal, ref, ttl_basis, ttl_measure, expose_seq, bind_policy_json FROM obp_ports WHERE id = ?`,
       )
       .get(input.id);
     if (!row) return { result: { kind: "notFound" } };
@@ -227,7 +227,7 @@ export class SqliteObpPersistenceStrategy implements ObpPersistenceStrategy {
   async getPortExposePolicy(input: GetPortExposePolicyInput): Promise<GetPortExposePolicyOutput> {
     const row = this.db
       .query<PortRow, [string]>(
-        `SELECT id, created_seq, nbc_expires_turn, nbc_expires_at_relay_ms, type, promise, max_bindings, terminal, ref, ttl_basis, ttl_measure, expose_seq, bind_policy_json FROM obp_ports WHERE id = ?`,
+        `SELECT id, created_seq, nbc_expires_turn, nbc_expires_at_ms, type, promise, max_bindings, terminal, ref, ttl_basis, ttl_measure, expose_seq, bind_policy_json FROM obp_ports WHERE id = ?`,
       )
       .get(input.portId);
     if (!row) return { result: { kind: "notFound" } };
@@ -255,8 +255,8 @@ export class SqliteObpPersistenceStrategy implements ObpPersistenceStrategy {
         id: offerId,
       };
       const nbcT = input.nbc_expires_turn ?? 0;
-      const nbcM = input.nbc_expires_at_relay_ms ?? 0;
-      this.insertOffer.run(offer.id, seq, nbcT, nbcM, offer.type);
+      const nbcA = input.nbc_expires_at_ms ?? 0;
+      this.insertOffer.run(offer.id, seq, nbcT, nbcA, offer.type);
 
       const extId = crypto.randomUUID();
       this.insertExtend.run(extId, input.partyId, offer.id, seq);
@@ -265,7 +265,7 @@ export class SqliteObpPersistenceStrategy implements ObpPersistenceStrategy {
       if (bindPortId !== "") {
         const portRow = this.db
           .query<PortRow, [string]>(
-            `SELECT id, created_seq, nbc_expires_turn, nbc_expires_at_relay_ms, type, promise, max_bindings, terminal, ref, ttl_basis, ttl_measure, expose_seq, bind_policy_json FROM obp_ports WHERE id = ?`,
+            `SELECT id, created_seq, nbc_expires_turn, nbc_expires_at_ms, type, promise, max_bindings, terminal, ref, ttl_basis, ttl_measure, expose_seq, bind_policy_json FROM obp_ports WHERE id = ?`,
           )
           .get(bindPortId);
         if (!portRow) {
@@ -299,7 +299,7 @@ export class SqliteObpPersistenceStrategy implements ObpPersistenceStrategy {
 
       const existingRow = this.db
         .query<PortRow, [string]>(
-          `SELECT id, created_seq, nbc_expires_turn, nbc_expires_at_relay_ms, type, promise, max_bindings, terminal, ref, ttl_basis, ttl_measure, expose_seq, bind_policy_json FROM obp_ports WHERE id = ?`,
+          `SELECT id, created_seq, nbc_expires_turn, nbc_expires_at_ms, type, promise, max_bindings, terminal, ref, ttl_basis, ttl_measure, expose_seq, bind_policy_json FROM obp_ports WHERE id = ?`,
         )
         .get(portId);
 
@@ -327,7 +327,7 @@ export class SqliteObpPersistenceStrategy implements ObpPersistenceStrategy {
       }
 
       const nbcT = input.nbc_expires_turn ?? 0;
-      const nbcM = input.nbc_expires_at_relay_ms ?? 0;
+      const nbcA = input.nbc_expires_at_ms ?? 0;
       const bindPolicyJson = stringifyCounterpartyBind(input.bind_policy ?? null);
       const maxBindings = normalizeMaxBindings(input.max_bindings);
       const terminal = (input.terminal ?? false) ? 1 : 0;
@@ -335,7 +335,7 @@ export class SqliteObpPersistenceStrategy implements ObpPersistenceStrategy {
         port.id,
         seq,
         nbcT,
-        nbcM,
+        nbcA,
         port.type,
         port.promise,
         maxBindings,
@@ -358,7 +358,7 @@ export class SqliteObpPersistenceStrategy implements ObpPersistenceStrategy {
     return this.db.transaction(() => {
       const offerRes = this.db
         .query<OfferRow, [string]>(
-          `SELECT id, created_seq, nbc_expires_turn, nbc_expires_at_relay_ms, type FROM obp_offers WHERE id = ?`,
+          `SELECT id, created_seq, nbc_expires_turn, nbc_expires_at_ms, type FROM obp_offers WHERE id = ?`,
         )
         .get(input.offerId);
       if (!offerRes) {
@@ -367,7 +367,7 @@ export class SqliteObpPersistenceStrategy implements ObpPersistenceStrategy {
 
       const portRow = this.db
         .query<PortRow, [string]>(
-          `SELECT id, created_seq, nbc_expires_turn, nbc_expires_at_relay_ms, type, promise, max_bindings, terminal, ref, ttl_basis, ttl_measure, expose_seq, bind_policy_json FROM obp_ports WHERE id = ?`,
+          `SELECT id, created_seq, nbc_expires_turn, nbc_expires_at_ms, type, promise, max_bindings, terminal, ref, ttl_basis, ttl_measure, expose_seq, bind_policy_json FROM obp_ports WHERE id = ?`,
         )
         .get(input.portId);
       if (!portRow) {
@@ -455,8 +455,8 @@ export class SqliteObpPersistenceStrategy implements ObpPersistenceStrategy {
     input: GetNbcBindWindowForOfferInput,
   ): Promise<GetNbcBindWindowForOfferOutput> {
     const row = this.db
-      .query<{ nbc_expires_turn: number; nbc_expires_at_relay_ms: number }, [string]>(
-        `SELECT nbc_expires_turn, nbc_expires_at_relay_ms FROM obp_offers WHERE id = ?`,
+      .query<{ nbc_expires_turn: number; nbc_expires_at_ms: number }, [string]>(
+        `SELECT nbc_expires_turn, nbc_expires_at_ms FROM obp_offers WHERE id = ?`,
       )
       .get(input.offerId);
     if (!row) return { result: { kind: "notFound" } };
@@ -465,7 +465,7 @@ export class SqliteObpPersistenceStrategy implements ObpPersistenceStrategy {
         kind: "window",
         window: {
           nbc_expires_turn: row.nbc_expires_turn,
-          nbc_expires_at_relay_ms: row.nbc_expires_at_relay_ms,
+          nbc_expires_at_ms: row.nbc_expires_at_ms,
         },
       },
     };
@@ -475,8 +475,8 @@ export class SqliteObpPersistenceStrategy implements ObpPersistenceStrategy {
     input: GetNbcBindWindowForPortInput,
   ): Promise<GetNbcBindWindowForPortOutput> {
     const row = this.db
-      .query<{ nbc_expires_turn: number; nbc_expires_at_relay_ms: number }, [string]>(
-        `SELECT nbc_expires_turn, nbc_expires_at_relay_ms FROM obp_ports WHERE id = ?`,
+      .query<{ nbc_expires_turn: number; nbc_expires_at_ms: number }, [string]>(
+        `SELECT nbc_expires_turn, nbc_expires_at_ms FROM obp_ports WHERE id = ?`,
       )
       .get(input.portId);
     if (!row) return { result: { kind: "notFound" } };
@@ -485,7 +485,7 @@ export class SqliteObpPersistenceStrategy implements ObpPersistenceStrategy {
         kind: "window",
         window: {
           nbc_expires_turn: row.nbc_expires_turn,
-          nbc_expires_at_relay_ms: row.nbc_expires_at_relay_ms,
+          nbc_expires_at_ms: row.nbc_expires_at_ms,
         },
       },
     };
@@ -525,8 +525,8 @@ export class SqliteObpPersistenceStrategy implements ObpPersistenceStrategy {
     const exposedPortIds = new Set(exposeRows.map((r) => r.port_id));
 
     const offerRows = this.db
-      .query<{ id: string; nbc_expires_turn: number; nbc_expires_at_relay_ms: number }, []>(
-        `SELECT id, nbc_expires_turn, nbc_expires_at_relay_ms FROM obp_offers`,
+      .query<{ id: string; nbc_expires_turn: number; nbc_expires_at_ms: number }, []>(
+        `SELECT id, nbc_expires_turn, nbc_expires_at_ms FROM obp_offers`,
       )
       .all();
     const offerNbcById = new Map(
@@ -534,7 +534,7 @@ export class SqliteObpPersistenceStrategy implements ObpPersistenceStrategy {
         r.id,
         {
           nbc_expires_turn: r.nbc_expires_turn,
-          nbc_expires_at_relay_ms: r.nbc_expires_at_relay_ms,
+          nbc_expires_at_ms: r.nbc_expires_at_ms,
         },
       ]),
     );
@@ -544,7 +544,7 @@ export class SqliteObpPersistenceStrategy implements ObpPersistenceStrategy {
         {
           id: string;
           nbc_expires_turn: number;
-          nbc_expires_at_relay_ms: number;
+          nbc_expires_at_ms: number;
           max_bindings: number;
           terminal: number;
           ttl_basis: string | null;
@@ -553,7 +553,7 @@ export class SqliteObpPersistenceStrategy implements ObpPersistenceStrategy {
         },
         []
       >(
-        `SELECT id, nbc_expires_turn, nbc_expires_at_relay_ms, max_bindings, terminal, ttl_basis, ttl_measure, expose_seq FROM obp_ports`,
+        `SELECT id, nbc_expires_turn, nbc_expires_at_ms, max_bindings, terminal, ttl_basis, ttl_measure, expose_seq FROM obp_ports`,
       )
       .all();
     const portNbcById = new Map(
@@ -561,7 +561,7 @@ export class SqliteObpPersistenceStrategy implements ObpPersistenceStrategy {
         r.id,
         {
           nbc_expires_turn: r.nbc_expires_turn,
-          nbc_expires_at_relay_ms: r.nbc_expires_at_relay_ms,
+          nbc_expires_at_ms: r.nbc_expires_at_ms,
         },
       ]),
     );
@@ -621,7 +621,7 @@ export class SqliteObpPersistenceStrategy implements ObpPersistenceStrategy {
   private loadPortsMap(): Map<string, Port> {
     const rows = this.db
       .query<PortRow, []>(
-        `SELECT id, created_seq, nbc_expires_turn, nbc_expires_at_relay_ms, type, promise, max_bindings, terminal, ref, ttl_basis, ttl_measure, expose_seq, bind_policy_json FROM obp_ports`,
+        `SELECT id, created_seq, nbc_expires_turn, nbc_expires_at_ms, type, promise, max_bindings, terminal, ref, ttl_basis, ttl_measure, expose_seq, bind_policy_json FROM obp_ports`,
       )
       .all();
     const m = new Map<string, Port>();

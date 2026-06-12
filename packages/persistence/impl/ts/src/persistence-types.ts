@@ -74,7 +74,7 @@ export type ExtendOfferInput = {
   offer: Offer;
   /** NBC N1 bind-window projection for this offer row — not on thin `Offer`. Default `0` when omitted. */
   nbc_expires_turn?: number;
-  nbc_expires_at_relay_ms?: number;
+  nbc_expires_at_ms?: number;
   /** When empty string, no BINDS edge is created. */
   bindPortId: string;
   /** Policy-shaped; NBC validates (`NbcBindSatisfaction`). `null` when not provided. */
@@ -94,7 +94,7 @@ export type ExposePortInput = {
   port: Port;
   /** NBC N1 bind-window projection — not on thin `Port`. Default `0` when omitted. */
   nbc_expires_turn?: number;
-  nbc_expires_at_relay_ms?: number;
+  nbc_expires_at_ms?: number;
   /** NBC expose-time bind policy persisted on port row; `null` when inactive. */
   bind_policy?: JsonDocument;
   /** NBC N2 bind capacity; default **1** when omitted. */
@@ -220,7 +220,7 @@ export type GetExtendingPartyIdOutput = {
 /** NBC N1 bind-window projection for an offer/port row — not on thin `Offer`/`Port`. */
 export type ObpNbcBindWindow = {
   nbc_expires_turn: number;
-  nbc_expires_at_relay_ms: number;
+  nbc_expires_at_ms: number;
 };
 
 export type GetNbcBindWindowResult =

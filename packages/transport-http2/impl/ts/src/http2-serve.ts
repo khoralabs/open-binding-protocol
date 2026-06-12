@@ -119,7 +119,6 @@ export function serveObp(options: ObpServeOptions): Promise<ObpServerHandle> {
             },
             handlers,
             initiatorChainPlans: [],
-            frameChannelBodyE2ee: true,
             ...(sessionEnvelopeSync !== undefined ? { sessionEnvelopeSync } : {}),
           });
 
