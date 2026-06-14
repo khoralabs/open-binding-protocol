@@ -12,12 +12,12 @@ This namespace defines the **outer** wire envelope for crypto-blind blob hubs th
 **MLS cryptographic profile (normative constants):**
 - Ciphersuite identifier **0x0001** (**RFC 9420**): `MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519`
 - Group bootstrap: **RFC 9420** KeyPackage publication, Welcome, Commit, Proposal, and Application message processing
-- **`groupId`** on this envelope **MUST** equal the bilateral NBC **`session_id`** when carrying multiplex negotiation for that session
+- **`route`** on this envelope is an opaque per-session handle; bilateral NBC **`session_id`** is exchanged only on DID-signed Welcome HTTP, not on the broadcast bus
 
 **Client integration (informative):** Deployments **MUST NOT** combine this profile with deprecated frame-channel body encryption (`e2ee` / `e2ee_hs` on **`Frame.body`**). Choose MLS hub wrapping **or** custodial plaintext on the blob bus at integration time — not in-band negotiation on the bus.
 
 **Hub blob-bus rules (crypto-blind forwarder):**
-- Blobs decode as **`MlsHubEnvelope`** with **`v = mls1`** are forwarded opaque to all connected peers **including the sender** (echo).
+- Blobs decode as **`MlsHubEnvelope`** with **`v = mls2`** are forwarded opaque to all connected peers **including the sender** (echo).
 - The hub **MUST NOT** decrypt MLS **`payload`** or parse inner OBP frames.
 
 **Peer timing:** MLS application payloads carry **`RelayTimingFrame`** (`rt1`) inside MLS encryption. Wall-clock bind windows use **`expires_at_ms`** + HLC peer time (`khora.obp.nbc.clock`).
@@ -30,15 +30,15 @@ This namespace defines the **outer** wire envelope for crypto-blind blob hubs th
 """)
 enum MlsHubEnvelopeVersion {
     /// Profile version label for **`MlsHubEnvelope`** (not an RFC term).
-    mls1
+    mls2
 }
 
 /// Outer JSON object on the blob bus when the MLS hub profile is in use.
 structure MlsHubEnvelope {
-    /// Profile version; **`mls1`** for this revision.
+    /// Profile version; **`mls2`** for this revision.
     v: MlsHubEnvelopeVersion
-    /// MLS group identifier; **MUST** equal bilateral **`session_id`** for NBC multiplex over this group.
-    groupId: String
+    /// Opaque per-session bus route (base64url); not the stable NBC session_id.
+    route: String
     /// Base64url-encoded MLS wire bytes per **RFC 9420** (application message, commit, proposal, etc.).
     payload: String
 }

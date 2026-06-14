@@ -10,7 +10,7 @@
 | Outbound TURN (sender) | Frame multiplexer (`validateOutboundNbcTurnBind` before send) | Early fail-fast for honest clients; optional hygiene only |
 | Inbound TURN (receiver) | Frame multiplexer (`applyNbcTurn` → `normalizeNbcBindPayload`) | **Authoritative** — invalid binds are rejected and not persisted |
 
-**"Host"** means the bilateral NBC endpoint (daemon/client running the frame multiplexer + local persistence), not the relay. The relay forwards opaque bytes (MLS `mls1` envelopes or plaintext multiplex) and never runs AJV on wire payloads.
+**"Host"** means the bilateral NBC endpoint (daemon/client running the frame multiplexer + local persistence), not the relay. The relay forwards opaque bytes (MLS `mls2` envelopes or plaintext multiplex) and never runs AJV on wire payloads.
 
 The **receiving peer** validates `bind_payload` against the port's `bind_policy` on the logical TURN body (after MLS decrypt when the MLS hub profile is in use) before `bindPort` writes a row. Configure **`validateBindPayload`** (typically `validateNbcBindPayloadForPort`) on every multiplexer that may accept binds to ports with an active policy; without it, active policies fail closed at apply time.
 

@@ -77,5 +77,5 @@ export {
   decodeMlsHubEnvelope,
   encodeMlsHubEnvelope,
   MLS_HUB_ENVELOPE_VERSION,
-  type MlsHubEnvelopeV1,
+  type MlsHubEnvelope,
 } from "./mls-hub-envelope";

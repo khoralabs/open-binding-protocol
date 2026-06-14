@@ -17,7 +17,7 @@ At the OBP layer, `Frame.body` is always **logical plaintext**. `sig` is over lo
 
 | Profile | Outer bytes | OBP inner | Wall-clock NBC N1 |
 |---------|-------------|-----------|-------------------|
-| MLS blob-hub (internet default) | `khora.obp.frame.mls#MlsHubEnvelope` (`v: mls1`) | `RelayTimingFrame` (`rt1`) then multiplex | `expires_at_ms` + HLC peer time |
+| MLS blob-hub (internet default) | `khora.obp.frame.mls#MlsHubEnvelope` (`v: mls2`) | `RelayTimingFrame` (`rt1`) then multiplex | `expires_at_ms` + HLC peer time |
 | Custodial plaintext | `RelayTimingFrame` (`rt1`) then multiplex | Bare `Frame` | `expires_at_ms` + HLC peer time |
 | Direct HTTP2 / TLS | Plain multiplex | Bare `Frame` | Causal (`expires_turn`) or local policy |
 
@@ -27,15 +27,15 @@ Deployments choose MLS-wrapped vs plaintext at **integration time**. There is no
 
 **Ciphersuite (RFC 9420):** `0x0001` — `MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519`
 
-**Outer envelope (`mls1`):**
+**Outer envelope (`mls2`):**
 
 ```json
-{ "v": "mls1", "groupId": "<session_id>", "payload": "<base64url MLS wire bytes>" }
+{ "v": "mls2", "route": "<opaque handle>", "payload": "<base64url MLS wire bytes>" }
 ```
 
 **Inner timing (`rt1`):** After MLS decrypt, bytes are `RelayTimingFrame` with HLC stamp and base64url application body (multiplex). See relay `docs/peer-timing.md`.
 
-**Bootstrap (RFC 9420):** KeyPackage publication, Welcome, group join. `groupId` **must** equal bilateral NBC `session_id` when carrying multiplex negotiation for that session.
+**Bootstrap (RFC 9420):** KeyPackage publication, Welcome (includes opaque `route`), group join. NBC `session_id` is exchanged on DID-signed Welcome HTTP only.
 
 **NBC on MLS profile:** Use `expires_at_ms` with peer HLC timing (`khora.obp.nbc.clock`).
 
@@ -43,7 +43,7 @@ Deployments choose MLS-wrapped vs plaintext at **integration time**. There is no
 
 ### Threat model (MLS hub)
 
-**Relay-visible:** `groupId`, blob sizes, timing envelope metadata (HLC physical component).
+**Relay-visible:** opaque `route`, blob sizes, timing envelope metadata (HLC physical component).
 
 **Peer-only:** MLS `payload` plaintext (multiplex wire, NBC semantics in `TURN.body`).
 
