@@ -23,6 +23,8 @@ export type GetPortResult = { readonly kind: "notFound" } | { readonly kind: "po
 
 export type RegisterPartyInput = {
   name: string;
+  /** Optional explicit party ID. When omitted, the strategy generates a random UUID. */
+  id?: string;
 };
 
 export type RegisterPartyOutput = {

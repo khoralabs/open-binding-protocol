@@ -81,7 +81,10 @@ export class InMemoryObpPersistenceStrategy implements ObpPersistenceStrategy {
   }
 
   async registerParty(input: RegisterPartyInput): Promise<RegisterPartyOutput> {
-    const party: Party = { id: this.nextId(), name: input.name };
+    const id = input.id?.trim() ? input.id : this.nextId();
+    const existing = this.parties.get(id);
+    if (existing !== undefined) return { party: existing };
+    const party: Party = { id, name: input.name };
     this.parties.set(party.id, party);
     return { party };
   }

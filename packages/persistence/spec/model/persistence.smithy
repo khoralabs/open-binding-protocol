@@ -18,7 +18,7 @@ Some rules that reference implementations historically treated as “OBP persist
 1. Each **Offer** has exactly one **EXTENDS** from its issuing **Party** (created via **ExtendOffer**).
 2. **BindPort** / bind leg of **ExtendOffer** may target only **Ports** that are the target of at least one **EXPOSES** (the port is *exposed* on the graph). *(Graph reachability only; NBC adds ledger, caps, **`terminal`** / policy context, and bind-admissibility on top.)*
 3. **Port.ref:** resolve for graph integrity; detect cycles on the ref chain and reject invalid projections (see also NBC **N3** when enforcing caps at bind time).
-4. **Party `name`** on **RegisterParty** MUST be non-empty after trim (TS **`OBPPersistenceClient`**).
+4. **Party `name`** on **RegisterParty** MUST be non-empty after trim (TS **`OBPPersistenceClient`**). When **`id`** is supplied, implementations MUST use it as the party id and SHOULD treat a duplicate id as a no-op.
 
 **NBC (separate spec)** — bind admissibility, ledger/expiry at bind, canonical **`NbcPortExposePolicy.max_bindings`** tally, **`NbcPortExposePolicy.terminal`**, **`NbcPortExposePolicy`** bind/TTL fields, **`NbcBindSatisfaction`**, concurrent cap atomicity, and related orchestration: see **`khora.obp.nbc#NegotiatedBindingConvention`**, **`khora.obp.nbc#NbcPortExposePolicy`**, and narrative doc above. OBP’s prior numbered items **3–4, 7, 9–11** (ledger/expiry, `max_bindings` tally, bind policy MUST, multi-EXPOSES cap behavior, concurrent atomicity, store-boundary cap rules) are **NBC** normative rules **N1–N7** there.
 
@@ -64,7 +64,7 @@ service ObpPersistence {
     ]
 }
 
-/// Create a party; implementation assigns **`Party.id`** and MAY record row **`created_seq`** per **`khora.obp.nbc#NbcRowCommitMeta`** where adapters require it.
+/// Create a party. If **`id`** is supplied and non-empty, implementations MUST use it as **`Party.id`** and SHOULD be idempotent (no-op if that id already exists). When **`id`** is omitted, the implementation assigns one. MAY record row **`created_seq`** per **`khora.obp.nbc#NbcRowCommitMeta`** where adapters require it.
 operation RegisterParty {
     input: RegisterPartyInput
     output: RegisterPartyOutput
@@ -72,6 +72,8 @@ operation RegisterParty {
 
 structure RegisterPartyInput {
     name: String
+    /// Optional explicit party id. When supplied, implementations MUST use this value and SHOULD treat a duplicate as a no-op rather than an error.
+    id: String
 }
 
 structure RegisterPartyOutput {

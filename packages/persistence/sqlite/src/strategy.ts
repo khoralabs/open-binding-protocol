@@ -138,7 +138,7 @@ export class SqliteObpPersistenceStrategy implements ObpPersistenceStrategy {
 
   constructor(private readonly db: Database) {
     this.insertParty = db.prepare(
-      `INSERT INTO obp_parties (id, created_seq, name) VALUES (?, ?, ?)`,
+      `INSERT OR IGNORE INTO obp_parties (id, created_seq, name) VALUES (?, ?, ?)`,
     );
     this.updatePortExpiresNow = db.prepare(
       `UPDATE obp_ports SET nbc_expires_turn = ?, nbc_expires_at_ms = ? WHERE id = ?`,
@@ -168,7 +168,7 @@ export class SqliteObpPersistenceStrategy implements ObpPersistenceStrategy {
 
   async registerParty(input: RegisterPartyInput): Promise<RegisterPartyOutput> {
     return this.db.transaction(() => {
-      const id = crypto.randomUUID();
+      const id = input.id?.trim() !== "" ? (input.id ?? crypto.randomUUID()) : crypto.randomUUID();
       const seq = Date.now();
       this.insertParty.run(id, seq, input.name);
       return {
