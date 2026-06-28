@@ -30,4 +30,6 @@ export type FrameSessionHandlers = {
   onSessionReady?: (session: FrameSessionHandle) => Promise<void>;
   onIncomingOffer?: (body: NbcTurnBody, session: FrameSessionHandle) => Promise<NbcTurnBody | null>;
   onTerminate?: (reason: string, code: string | undefined, sessionId?: string) => Promise<void>;
+  /** Called when a frame is skipped due to a decode or validation error from an untrusted peer. */
+  onFrameError?: (error: unknown, context: "decode" | "process") => void;
 };

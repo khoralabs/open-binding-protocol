@@ -580,10 +580,44 @@ export class MultiplexSessionRuntime {
     await this.handleInboundFrame(part.value, part.wireUtf8);
   }
 
+  // Close the channel after this many consecutive frame errors (no good frame in between).
+  // Prevents a junk-flooding peer from burning CPU indefinitely.
+  private static readonly MAX_CONSECUTIVE_FRAME_ERRORS = 16;
+
   private async runReadLoop(): Promise<void> {
+    let consecutiveErrors = 0;
     for await (const chunk of this.channel.read()) {
-      for (const part of this.decoder.push(chunk)) {
-        await this.processYield(part);
+      let parts: ReturnType<typeof this.decoder.push>;
+      try {
+        parts = this.decoder.push(chunk);
+      } catch (e) {
+        // Malformed length prefix or oversized frame from an untrusted peer — skip the chunk.
+        // The decoder's internal buffer is reset by its own fail() path.
+        this.handlers.onFrameError?.(e, "decode");
+        consecutiveErrors++;
+        if (consecutiveErrors >= MultiplexSessionRuntime.MAX_CONSECUTIVE_FRAME_ERRORS) {
+          this.channelDead = true;
+          await this.channel.close(new Error("peer exceeded consecutive frame error limit"));
+          return;
+        }
+        continue;
+      }
+      for (const part of parts) {
+        try {
+          await this.processYield(part);
+          consecutiveErrors = 0;
+        } catch (e) {
+          // Bad frame content (unknown session, bad signature, validation failure, etc.) —
+          // log and skip rather than killing the entire multiplex connection.
+          this.handlers.onFrameError?.(e, "process");
+          consecutiveErrors++;
+          if (consecutiveErrors >= MultiplexSessionRuntime.MAX_CONSECUTIVE_FRAME_ERRORS) {
+            this.channelDead = true;
+            await this.channel.close(new Error("peer exceeded consecutive frame error limit"));
+            return;
+          }
+          continue;
+        }
         if (this.channelDead) return;
       }
     }
