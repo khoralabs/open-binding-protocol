@@ -1,0 +1,34 @@
+{
+  "name": "@khoralabs/obp-core",
+  "version": "0.0.0",
+  "type": "module",
+  "private": true,
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./persistence": {
+      "types": "./src/persistence/core/index.ts",
+      "import": "./src/persistence/core/index.ts",
+      "default": "./src/persistence/core/index.ts"
+    },
+    "./sqlite": {
+      "types": "./src/persistence/sqlite/index.ts",
+      "import": "./src/persistence/sqlite/index.ts",
+      "default": "./src/persistence/sqlite/index.ts"
+    }
+  },
+  "scripts": {
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.14",
+    "@khoralabs/obp-nbc": "workspace:*"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}

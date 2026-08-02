@@ -1,5 +1,5 @@
+import type { BindListingRow } from "@khoralabs/obp-core/persistence";
 import type { NbcChainGraph, NbcChainOfferRow, NbcChainPortRow } from "@khoralabs/obp-nbc";
-import type { BindListingRow } from "@khoralabs/obp-persistence";
 import type { Edge, Node } from "@xyflow/react";
 
 /** React Flow `data` for offer nodes. */

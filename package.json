@@ -5,9 +5,6 @@
   "type": "module",
   "workspaces": [
     "packages/*",
-    "packages/*/spec",
-    "packages/*/impl/ts",
-    "packages/*/sqlite",
     "packages/react/examples"
   ],
   "scripts": {

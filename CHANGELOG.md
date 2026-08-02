@@ -7,19 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-
-- `@khoralabs/obp-primitives`: shared hex encoding, SHA-256 helpers, and `Sha256HexLower` wire type.
-- Initial open-source release of the OBP monorepo: Smithy specs and TypeScript reference implementations for model, persistence, NBC, frames, session, transports, frame relay, and React visualization.
-- `@khoralabs/nbc-bind-policy`: JSON Schema (draft 2020-12) + AJV validation for NBC bind payloads.
-- `@khoralabs/duplex-byte-stream`: duplex byte streams and channel admission tickets for relay transports.
-- OSS docs: `LICENSE`, `CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, `CHANGELOG.md`.
-
 ### Changed
 
-- `JsonDocument` is owned only by `@khoralabs/obp-model`; duplicate defs removed from frames/session packages.
+- Consolidated workspace into four packages: `@khoralabs/obp-core` (with `./persistence`, `./sqlite`), `@khoralabs/obp-nbc` (with `./bind-policy`), `@khoralabs/obp-wire` (with `./http2`, `./ws`), `@khoralabs/obp-react`.
+- Moved theory and Smithy specs under `docs/` (`docs/theory/`, `docs/spec/`); validate with `bash docs/spec/validate.sh`.
+- Persistence strategies take an optional `validateBindPolicyAtExpose` hook (NBC supplies the AJV validator) so `obp-core` does not depend on `obp-nbc`.
 
 ### Removed
 
-- `@khoralabs/obp-frames-impl` no longer re-exports `JsonDocument`, `Sha256HexLower`, `isSha256HexLower`, `toSha256HexLower`, or `sha256HexLowerFromUtf8String` — import from `@khoralabs/obp-model` / `@khoralabs/obp-primitives`.
-- `@khoralabs/obp-session-impl` no longer re-exports `JsonDocument`, `Sha256HexLower`, `isSha256HexLower`, or `toSha256HexLower`.
+- Separate packages: `obp-errors`, `obp-primitives`, `obp-model`, `obp-byte-stream`, `obp-persistence`, `obp-sqlite-persistence`, `nbc-bind-policy`, `obp-frames-impl`, `obp-session-impl`, `obp-transport-http2`, `obp-transport-ws`, and all `*-spec` npm shells.

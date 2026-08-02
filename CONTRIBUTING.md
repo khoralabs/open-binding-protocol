@@ -5,7 +5,7 @@ Thanks for helping improve `@khoralabs/obp`. This repo is a Bun workspace with p
 ## Prerequisites
 
 - [Bun](https://bun.sh) 1.3+
-- For Smithy model changes: [Smithy CLI](https://smithy.io/2.0/guides/smithy-cli/cli_installation.html) (`smithy validate model` in each `packages/*/spec` directory)
+- For Smithy model changes: [Smithy CLI](https://smithy.io/2.0/guides/smithy-cli/cli_installation.html) (`bash docs/spec/validate.sh`)
 
 ## Setup
 
@@ -28,10 +28,10 @@ bun run test
 If you changed Smithy models (requires [Smithy CLI](https://smithy.io/2.0/guides/smithy-cli/cli_installation.html)):
 
 ```bash
-bash packages/validate-all.sh
+bash docs/spec/validate.sh
 ```
 
-Or per package (working directory is `…/spec`):
+Or per module (working directory is `docs/spec/<module>`):
 
 ```bash
 smithy validate model && smithy build
@@ -48,7 +48,7 @@ If you changed public TypeScript APIs, update `CHANGELOG.md` under **Unreleased*
 
 ## Documentation
 
-User-facing docs live in `packages/README.md` and package READMEs. When behavior is normative (Smithy models, persistence, NBC rules), update the relevant spec or guide rather than only inline comments.
+User-facing docs live under `docs/` (theory + Smithy) and package READMEs. When behavior is normative (Smithy models, persistence, NBC rules), update the relevant spec or guide rather than only inline comments.
 
 ## Questions
 

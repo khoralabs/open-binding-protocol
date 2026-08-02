@@ -1,8 +1,3 @@
 #!/usr/bin/env bash
-set -euo pipefail
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-for pkg in model persistence nbc frames session transport-http2; do
-  echo "==> obp: $pkg"
-  (cd "$ROOT/$pkg/spec" && smithy validate model && smithy build)
-done
-echo "==> obp: all packages OK"
+# Deprecated: use docs/spec/validate.sh
+exec bash "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/docs/spec/validate.sh"
