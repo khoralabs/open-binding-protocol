@@ -1,8 +1,23 @@
 {
   "name": "@khoralabs/obp-wire",
   "version": "0.0.0",
+  "description": "OBP wire: frame + session; ./http2 and ./ws transports.",
+  "license": "MIT",
   "type": "module",
-  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/khoralabs/open-binding-protocol.git",
+    "directory": "packages/wire"
+  },
+  "homepage": "https://github.com/khoralabs/open-binding-protocol/tree/main/packages/wire#readme",
+  "bugs": "https://github.com/khoralabs/open-binding-protocol/issues",
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "exports": {
     ".": {
       "types": "./src/index.ts",
@@ -21,6 +36,7 @@
     }
   },
   "scripts": {
+    "build": "bun run ../../scripts/build-package.ts .",
     "test": "bun test",
     "typecheck": "tsc --noEmit"
   },

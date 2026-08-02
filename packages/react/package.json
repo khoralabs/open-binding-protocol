@@ -1,9 +1,24 @@
 {
   "name": "@khoralabs/obp-react",
   "version": "0.0.0",
+  "description": "OBP React components for NBC chain visualization.",
+  "license": "MIT",
   "module": "src/index.ts",
   "type": "module",
-  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/khoralabs/open-binding-protocol.git",
+    "directory": "packages/react"
+  },
+  "homepage": "https://github.com/khoralabs/open-binding-protocol/tree/main/packages/react#readme",
+  "bugs": "https://github.com/khoralabs/open-binding-protocol/issues",
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "exports": {
     ".": {
       "types": "./src/index.ts",
@@ -12,6 +27,7 @@
     }
   },
   "scripts": {
+    "build": "bun run ../../scripts/build-package.ts .",
     "test": "bun test",
     "typecheck": "tsc --noEmit"
   },

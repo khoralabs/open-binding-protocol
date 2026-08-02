@@ -1,8 +1,23 @@
 {
   "name": "@khoralabs/obp-nbc",
   "version": "0.0.0",
+  "description": "OBP NBC rules (TypeScript); ./bind-policy for expose-time schema checks.",
+  "license": "MIT",
   "type": "module",
-  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/khoralabs/open-binding-protocol.git",
+    "directory": "packages/nbc"
+  },
+  "homepage": "https://github.com/khoralabs/open-binding-protocol/tree/main/packages/nbc#readme",
+  "bugs": "https://github.com/khoralabs/open-binding-protocol/issues",
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "exports": {
     ".": {
       "types": "./src/index.ts",
@@ -16,6 +31,7 @@
     }
   },
   "scripts": {
+    "build": "bun run ../../scripts/build-package.ts .",
     "test": "bun test",
     "typecheck": "tsc --noEmit"
   },
