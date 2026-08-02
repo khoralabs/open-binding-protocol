@@ -1,6 +1,6 @@
 {
   "name": "@khoralabs/obp-react",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "OBP React components for NBC chain visualization.",
   "license": "MIT",
   "module": "src/index.ts",

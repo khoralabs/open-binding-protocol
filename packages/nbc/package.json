@@ -1,6 +1,6 @@
 {
   "name": "@khoralabs/obp-nbc",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "OBP NBC rules (TypeScript); ./bind-policy for expose-time schema checks.",
   "license": "MIT",
   "type": "module",

@@ -82,7 +82,8 @@ test("flowchart layout places successor offer to the right of bound port", () =>
   expect([...byId.keys()].some((id) => id.startsWith("party:"))).toBe(false);
 
   const genesisNode = byId.get("offer:offer-genesis");
-  expect((genesisNode?.data as { partyLabel?: string }).partyLabel).toBe("Buyer");
+  const genesisData = genesisNode?.data as { partyLabel?: string } | undefined;
+  expect(genesisData?.partyLabel).toBe("Buyer");
 
   const xGenesis = genesisNode?.position.x ?? 0;
   const xBind = byId.get("offer:offer-bind")?.position.x ?? 0;
@@ -128,7 +129,8 @@ test("genesis-only snapshot lays offer then ports to the right", () => {
   expect([...byId.keys()].some((id) => id.startsWith("party:"))).toBe(false);
 
   const offerNode = byId.get("offer:o1");
-  expect((offerNode?.data as { partyLabel?: string }).partyLabel).toBe("Party");
+  const offerData = offerNode?.data as { partyLabel?: string } | undefined;
+  expect(offerData?.partyLabel).toBe("Party");
 
   const xOffer = offerNode?.position.x ?? 0;
   const xPort = byId.get("port:pt1")?.position.x ?? 0;
