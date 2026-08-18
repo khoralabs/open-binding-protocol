@@ -37,7 +37,10 @@ export type ObpServeOptions = {
   listen: ObpServeListen;
   verifier?: FrameVerifier;
   onConnect: (ctx: ObpOnConnectContext) => ObpResolvedSession | Promise<ObpResolvedSession>;
-} & Pick<FrameSessionHandlers, "onSessionReady" | "onIncomingOffer" | "onTerminate"> & {
+} & Pick<
+  FrameSessionHandlers,
+  "onSessionReady" | "onIncomingOffer" | "onTerminate" | "onGraphAdvanced"
+> & {
     sessionEnvelopeSync?: boolean;
   };
 
@@ -53,6 +56,7 @@ export function serveObp(options: ObpServeOptions): Promise<ObpServerHandle> {
     ...(options.onSessionReady !== undefined ? { onSessionReady: options.onSessionReady } : {}),
     ...(options.onIncomingOffer !== undefined ? { onIncomingOffer: options.onIncomingOffer } : {}),
     ...(options.onTerminate !== undefined ? { onTerminate: options.onTerminate } : {}),
+    ...(options.onGraphAdvanced !== undefined ? { onGraphAdvanced: options.onGraphAdvanced } : {}),
   };
 
   return new Promise((resolve, reject) => {

@@ -17,7 +17,7 @@ const greetingSchema = {
 describe("validateNbcBindPayloadForPort", () => {
   test("rejects payload without policy", () => {
     expect(validateNbcBindPayloadForPort(null, {})).toEqual({});
-    expect(() => validateNbcBindPayloadForPort(null, { x: 1 })).toThrow();
+    expect(() => validateNbcBindPayloadForPort(null, { x: 1 }, "port-z")).toThrow(/port port-z/);
   });
 
   test("validates against bind_policy JSON Schema", () => {

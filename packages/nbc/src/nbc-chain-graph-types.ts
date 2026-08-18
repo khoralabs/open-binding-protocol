@@ -34,7 +34,7 @@ export type NbcChainOfferRow = {
 /** Port row: thin `khora.obp#Port` + NBC expiry projection + layout joins. */
 export type NbcChainPortRow = {
   readonly id: string;
-  readonly type: string;
+  readonly kind: string;
   readonly promise: string;
   readonly ref: string;
   readonly expires_turn: number;

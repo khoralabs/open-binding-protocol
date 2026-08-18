@@ -17,7 +17,7 @@ describe("collectNbcChainGraph", () => {
       offerId: offer.id,
       port: {
         id: "",
-        type: "slot",
+        kind: "slot",
         promise: "Do thing",
         ref: "",
       },

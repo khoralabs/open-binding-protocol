@@ -105,6 +105,7 @@ export async function applyNbcTurn(params: ApplyNbcTurnParams): Promise<ApplyNbc
       bindPolicy,
       bindPayload: body.bind_payload,
       validateBindPayload,
+      portId: body.bind_port_id,
     });
 
     await client.bindPort({

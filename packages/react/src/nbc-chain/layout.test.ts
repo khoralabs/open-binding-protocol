@@ -29,7 +29,7 @@ test("flowchart layout places successor offer to the right of bound port", () =>
     ports: [
       {
         id: "port-a",
-        type: "afford-a",
+        kind: "afford-a",
         promise: "Affordance A.",
         ref: "",
         expires_turn: 0,
@@ -39,7 +39,7 @@ test("flowchart layout places successor offer to the right of bound port", () =>
       },
       {
         id: "port-b",
-        type: "afford-b",
+        kind: "afford-b",
         promise: "Affordance B.",
         ref: "",
         expires_turn: 0,
@@ -49,7 +49,7 @@ test("flowchart layout places successor offer to the right of bound port", () =>
       },
       {
         id: "port-next",
-        type: "next",
+        kind: "next",
         promise: "Next-step affordance.",
         ref: "",
         expires_turn: 0,
@@ -109,7 +109,7 @@ test("genesis-only snapshot lays offer then ports to the right", () => {
     ports: [
       {
         id: "pt1",
-        type: "listing",
+        kind: "listing",
         promise: "Layout test listing.",
         ref: "",
         expires_turn: 0,

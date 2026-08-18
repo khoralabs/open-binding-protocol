@@ -51,12 +51,18 @@ export async function collectNbcChainGraph(
     portId: e.portId,
   }));
 
-  const offerIds = new Set<string>();
-  for (const e of exposes) offerIds.add(e.offerId);
-  for (const b of binds) offerIds.add(b.offerId);
+  const offerIdsOrdered: string[] = [];
+  const offerIdSet = new Set<string>();
+  const pushOffer = (id: string): void => {
+    if (offerIdSet.has(id)) return;
+    offerIdSet.add(id);
+    offerIdsOrdered.push(id);
+  };
+  for (const e of exposes) pushOffer(e.offerId);
+  for (const b of binds) pushOffer(b.offerId);
 
   const extendRows = await Promise.all(
-    [...offerIds].map(async (offerId) => {
+    offerIdsOrdered.map(async (offerId) => {
       const partyId = await client.getExtendingPartyId(offerId);
       if (partyId === null || partyId === "") return null;
       return { partyId, offerId } satisfies NbcChainExtendEdge;
@@ -82,7 +88,7 @@ export async function collectNbcChainGraph(
   const partyNameById = new Map(parties.map((p) => [p.id, p.name]));
 
   const offerRows = await Promise.all(
-    [...offerIds].map(async (offerId) => {
+    offerIdsOrdered.map(async (offerId) => {
       const { result } = await client.getOffer({ id: offerId });
       if (result.kind !== "offer") return null;
       const o = result.offer;
@@ -105,7 +111,6 @@ export async function collectNbcChainGraph(
     }),
   );
   const offers: NbcChainOfferRow[] = offerRows.filter((row) => row !== null);
-  offers.sort((a, b) => a.id.localeCompare(b.id));
 
   const portsById = new Map(snapOut.entries.map((e) => [e.portId, e.port]));
 
@@ -136,7 +141,7 @@ export async function collectNbcChainGraph(
       const exposePolicyRes = await client.getPortExposePolicy({ portId: canonicalId });
       const row: NbcChainPortRow = {
         id: port.id,
-        type: port.type,
+        kind: port.kind,
         promise: port.promise,
         ref: port.ref,
         expires_turn,

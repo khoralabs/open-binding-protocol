@@ -37,7 +37,7 @@ describe("applyNbcTurn", () => {
       ports: [
         {
           id: "",
-          type: "slot",
+          kind: "slot",
           promise: "pick",
           expires_turn: 100,
           bind_policy: null,
@@ -86,7 +86,7 @@ describe("applyNbcTurn", () => {
       ports: [
         {
           id: "",
-          type: "slot",
+          kind: "slot",
           promise: "pick",
           expires_turn: 100,
           bind_policy: textBindSchema,
@@ -140,7 +140,7 @@ describe("applyNbcTurn", () => {
         ports: [
           {
             id: "race-port",
-            type: "slot",
+            kind: "slot",
             promise: "p",
             expires_turn: 100,
             bind_policy: null,
@@ -194,7 +194,7 @@ describe("applyNbcTurn", () => {
         ports: [
           {
             id: "shared-port",
-            type: "slot",
+            kind: "slot",
             promise: "p",
             expires_turn: 100,
             bind_policy: null,
@@ -254,7 +254,7 @@ describe("nbc session reads", () => {
       ports: [
         {
           id: "",
-          type: "x",
+          kind: "x",
           promise: "",
           expires_turn: 100,
           bind_policy: null,
@@ -277,6 +277,54 @@ describe("nbc session reads", () => {
     expect(forBob.some((e) => e.portId === pid)).toBe(true);
     const forAlice = await getBindablePortsForParty(bob.id, client, timing0);
     expect(forAlice.some((e) => e.portId === pid)).toBe(false);
+  });
+
+  test("getBindablePortsForParty omits ports at max_bindings", async () => {
+    const client = createInMemoryObpPersistenceClient();
+    const { party: alice } = await client.registerParty({ name: "Alice" });
+    const { party: bob } = await client.registerParty({ name: "Bob" });
+    const body = parseNbcTurnBody({
+      offer: { id: "", expires_turn: 0, type: "step" },
+      ports: [
+        {
+          id: "",
+          kind: "slot",
+          promise: "pick",
+          expires_turn: 0,
+          bind_policy: null,
+          ref: "",
+          max_bindings: 1,
+        },
+      ],
+      bind_port_id: "",
+      bind_payload: null,
+    });
+    const { exposedPortIds, offerId } = await applyNbcTurn({
+      partyId: alice.id,
+      body,
+      client,
+      timing: timing0,
+    });
+    const pid = exposedPortIds[0];
+    if (pid === undefined) throw new Error("port");
+    expect(
+      (await getBindablePortsForParty(alice.id, client, timing0)).some((e) => e.portId === pid),
+    ).toBe(true);
+    await applyNbcTurn({
+      partyId: bob.id,
+      body: parseNbcTurnBody({
+        offer: { id: "", type: "reply", expires_turn: 0 },
+        ports: [],
+        bind_port_id: pid,
+        bind_payload: {},
+      }),
+      client,
+      timing: timing0,
+    });
+    expect(
+      (await getBindablePortsForParty(alice.id, client, timing0)).some((e) => e.portId === pid),
+    ).toBe(false);
+    expect(offerId.length).toBeGreaterThan(0);
   });
 
   test("nbcNaturalStop after empty turn with no bindables", async () => {

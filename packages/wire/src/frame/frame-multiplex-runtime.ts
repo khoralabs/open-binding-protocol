@@ -374,12 +374,70 @@ export class MultiplexSessionRuntime {
       });
       const outboundBody = this.stampOutboundClock(body);
       const wire = serializeNbcTurnBodyForWire(outboundBody);
-      const { frame } = await chain.dag.signOutboundAtTip(this.signer, "TURN", wire);
+      const oldP = chain.dag.tipHash;
+      const { frame, nextTip } = await chain.dag.signOutboundAtTip(this.signer, "TURN", wire);
       const key = frameDedupeKeyHex(frame);
       if (this.globalDedupe.has(key)) return;
 
+      const applied = parseNbcFrameTurnBody(frame.body as Record<string, unknown>);
+      await applyNbcFrameTurn(
+        this.client,
+        partyIdForActor(chain.init, this.signer.actor),
+        applied,
+        {
+          turnSeq: chain.sessionOps.length,
+          effectiveNowMs: this.getEffectiveNowMs?.() ?? undefined,
+        },
+        this.validateBindPayload,
+      );
+
+      this.globalDedupe.add(key);
+      accumulateTaggedSessionOps(chain.sessionOps, frameAsOpLike(frame), sessionId);
+      accumulateTaggedSessionOps(this.globalOps, frameAsOpLike(frame), sessionId);
       await this.sendWire(frame);
+      chain.dag.commitTip(nextTip);
+      this.advanceTip(chain, oldP);
+      await this.notifyGraphAdvanced(chain, "turn", applied);
+      await this.requestEnvelopeFlush(sessionId);
     });
+  }
+
+  private emitOutboundEndOffers(sessionId: string): Promise<void> {
+    return this.enqueueMux(async () => {
+      const chain = this.chains.get(sessionId);
+      if (chain === undefined || !chain.active) {
+        throw new ObpError("VALIDATION", "emitOutboundEndOffers: unknown or inactive chain");
+      }
+      const oldP = chain.dag.tipHash;
+      const { frame, nextTip } = await chain.dag.signOutboundAtTip(this.signer, "END_OFFERS", {});
+      const key = frameDedupeKeyHex(frame);
+      if (this.globalDedupe.has(key)) return;
+
+      this.globalDedupe.add(key);
+      accumulateTaggedSessionOps(chain.sessionOps, frameAsOpLike(frame), sessionId);
+      accumulateTaggedSessionOps(this.globalOps, frameAsOpLike(frame), sessionId);
+      await this.sendWire(frame);
+      chain.dag.commitTip(nextTip);
+      this.advanceTip(chain, oldP);
+      await this.notifyGraphAdvanced(chain, "end_offers");
+      await this.requestEnvelopeFlush(sessionId);
+    });
+  }
+
+  private async notifyGraphAdvanced(
+    c: ChainState,
+    reason: "turn" | "end_offers",
+    body?: NbcTurnBody,
+  ): Promise<void> {
+    const session = this.makeHandle(c);
+    const event = {
+      sessionId: c.init.session_id,
+      reason,
+      ...(body !== undefined ? { body } : {}),
+    };
+    const fn = c.hooks?.onGraphAdvanced ?? this.handlers.onGraphAdvanced;
+    if (fn === undefined) return;
+    await fn(event, session);
   }
 
   private makeHandle(c: ChainState): FrameSessionHandle {
@@ -394,6 +452,7 @@ export class MultiplexSessionRuntime {
         return c.dag.tipHash;
       },
       sendTurn: (body) => this.emitOutboundTurn(c.init.session_id, body),
+      endOffers: () => this.emitOutboundEndOffers(c.init.session_id),
       terminate: async (reason: string, code?: string) => {
         const sid = c.init.session_id;
         await this.enqueueMux(async () => {
@@ -523,6 +582,7 @@ export class MultiplexSessionRuntime {
 
         if (frame.type === "TURN") {
           const body = parseNbcFrameTurnBody(frame.body as Record<string, unknown>);
+          await this.notifyGraphAdvanced(c, "turn", body);
           let replied = false;
           const offerFn = c.hooks?.onIncomingOffer ?? this.handlers.onIncomingOffer;
           if (offerFn !== undefined) {
@@ -534,6 +594,7 @@ export class MultiplexSessionRuntime {
           }
           if (!replied) await this.requestEnvelopeFlush(c.init.session_id);
         } else {
+          await this.notifyGraphAdvanced(c, "end_offers");
           await this.requestEnvelopeFlush(c.init.session_id);
         }
         return;

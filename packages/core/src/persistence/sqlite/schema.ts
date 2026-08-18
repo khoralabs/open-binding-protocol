@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS obp_ports (
   created_seq INTEGER NOT NULL,
   nbc_expires_turn INTEGER NOT NULL,
   nbc_expires_at_ms INTEGER NOT NULL DEFAULT 0,
-  type TEXT NOT NULL,
+  kind TEXT NOT NULL,
   promise TEXT NOT NULL DEFAULT '',
   max_bindings INTEGER NOT NULL,
   terminal INTEGER NOT NULL CHECK (terminal IN (0, 1)),

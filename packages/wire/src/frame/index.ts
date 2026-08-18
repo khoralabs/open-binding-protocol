@@ -32,6 +32,8 @@ export type {
   FrameMultiplexOpenerApi,
   FrameSessionHandle,
   FrameSessionHandlers,
+  GraphAdvancedEvent,
+  GraphAdvancedReason,
   MultiplexChainHooks,
 } from "./frame-mux-types";
 export {

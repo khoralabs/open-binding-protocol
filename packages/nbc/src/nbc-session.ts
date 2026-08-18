@@ -3,8 +3,14 @@
  */
 
 import type { Port } from "@khoralabs/obp-core";
-import type { ObpNbcBindWindow, ObpPersistenceClient } from "@khoralabs/obp-core/persistence";
+import {
+  countBindsForCanonicalPort,
+  DEFAULT_MAX_BINDINGS,
+  type ObpNbcBindWindow,
+  type ObpPersistenceClient,
+} from "@khoralabs/obp-core/persistence";
 import { isEpochExpiryOk, isTurnExpiryOk, type NbcBindTiming } from "./nbc-invariants";
+import { resolveCanonicalPortId } from "./nbc-ref";
 
 export type BindablePortEntry = { portId: string; port: Port };
 
@@ -16,14 +22,20 @@ function isNbcWindowBindableAt(w: ObpNbcBindWindow, t: NbcBindTiming): boolean {
 }
 
 /**
- * Ports exposed on offers extended by **`counterpartyPartyId`**, valid at **`timing`** (N1 on offer + port bind windows).
+ * Ports exposed on offers extended by **`counterpartyPartyId`**, valid at **`timing`**
+ * (N1 on offer + port bind windows) and under **`max_bindings`**.
  */
 export async function getBindablePortsForParty(
   counterpartyPartyId: string,
   client: ObpPersistenceClient,
   timing: NbcBindTiming,
 ): Promise<BindablePortEntry[]> {
-  const { edges } = await client.listExposedPortEdges();
+  const [{ edges }, { binds }, snap] = await Promise.all([
+    client.listExposedPortEdges(),
+    client.listBinds(),
+    client.getPortsSnapshot(),
+  ]);
+  const portsById = new Map(snap.entries.map((e) => [e.portId, e.port]));
   const out: BindablePortEntry[] = [];
   for (const e of edges) {
     const ext = await client.getExtendingPartyId(e.offerId);
@@ -38,6 +50,13 @@ export async function getBindablePortsForParty(
     const offerWin = await client.getNbcBindWindowForOfferOrNull(e.offerId);
     if (!offerWin) continue;
     if (!isNbcWindowBindableAt(offerWin, timing)) continue;
+    const resolved = resolveCanonicalPortId(portsById, e.portId);
+    const canonicalId = resolved.ok ? resolved.canonicalId : e.portId;
+    const policy = await client.getPortExposePolicy({ portId: canonicalId });
+    const max =
+      policy.result.kind === "found" ? policy.result.policy.max_bindings : DEFAULT_MAX_BINDINGS;
+    const bindCount = countBindsForCanonicalPort(binds, portsById, canonicalId);
+    if (bindCount >= max) continue;
     out.push({ portId: e.portId, port });
   }
   return out;

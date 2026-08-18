@@ -17,10 +17,21 @@ export type NbcOfferSpec = {
   expires_at_ms: number;
 };
 
+/** JSON Schema instance-type keywords — not valid as an affordance `kind`. */
+const JSON_SCHEMA_TYPE_KEYWORDS = new Set([
+  "object",
+  "array",
+  "string",
+  "number",
+  "integer",
+  "boolean",
+  "null",
+]);
+
 /** Affordance spec in an NBC TURN (maps to `ExposePort` + thin `khora.obp#Port`). */
 export type NbcPortSpec = {
   id: string;
-  type: string;
+  kind: string;
   promise: string;
   expires_turn: number;
   expires_at_ms: number;
@@ -112,12 +123,32 @@ function parseNbcOfferSpec(v: unknown): NbcOfferSpec {
   return { id, type, expires_turn, expires_at_ms };
 }
 
+function parsePortKind(v: Record<string, unknown>): string {
+  if (typeof v.kind === "string") {
+    if (v.kind.length === 0) {
+      throw new TypeError("NbcPortSpec.kind: expected non-empty string");
+    }
+    return v.kind;
+  }
+  if (typeof v.type === "string") {
+    if (JSON_SCHEMA_TYPE_KEYWORDS.has(v.type)) {
+      throw new TypeError(
+        'NbcPortSpec.kind: expected affordance kind; "type" looks like a JSON Schema keyword',
+      );
+    }
+    if (v.type.length === 0) {
+      throw new TypeError("NbcPortSpec.kind: expected non-empty string");
+    }
+    return v.type;
+  }
+  throw new TypeError("NbcPortSpec.kind: expected string");
+}
+
 function parseNbcPortSpec(v: unknown): NbcPortSpec {
   if (!isRecord(v)) throw new TypeError("port spec: expected object");
   const id = v.id;
-  const type = v.type;
   if (typeof id !== "string") throw new TypeError("NbcPortSpec.id: expected string");
-  if (typeof type !== "string") throw new TypeError("NbcPortSpec.type: expected string");
+  const kind = parsePortKind(v);
   const promise = typeof v.promise === "string" ? v.promise : "";
   const expires_turn = toNonnegInt(v.expires_turn, "NbcPortSpec.expires_turn");
   const expires_at_ms = toEpochMs(v.expires_at_ms, "NbcPortSpec.expires_at_ms");
@@ -141,7 +172,7 @@ function parseNbcPortSpec(v: unknown): NbcPortSpec {
   }
   return {
     id,
-    type,
+    kind,
     promise,
     expires_turn,
     expires_at_ms,
@@ -209,7 +240,7 @@ export function serializeNbcTurnBodyForWire(body: NbcTurnBody): Record<string, u
     },
     ports: body.ports.map((p) => ({
       id: p.id,
-      type: p.type,
+      kind: p.kind,
       promise: p.promise,
       expires_turn: p.expires_turn,
       expires_at_ms: epochMsForWire(p.expires_at_ms),
@@ -228,7 +259,7 @@ export function serializeNbcTurnBodyForWire(body: NbcTurnBody): Record<string, u
 export function nbcPortSpecToPort(spec: NbcPortSpec): Port {
   return {
     id: spec.id,
-    type: spec.type,
+    kind: spec.kind,
     promise: spec.promise,
     ref: spec.ref,
   };

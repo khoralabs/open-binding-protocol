@@ -86,21 +86,24 @@ export function isActiveBindPolicy(policy: JsonDocument | null): policy is JsonD
   return Object.keys(policy as object).length > 0;
 }
 
-function assertBindPayloadEmptyWhenInactive(bindPayload: JsonDocument | null): void {
+function emptyPolicyMessage(portId?: string): string {
+  return portId !== undefined && portId.length > 0
+    ? `bind_payload must be omitted or empty when port ${portId} has no bind_policy`
+    : "bind_payload must be omitted or empty when port has no bind_policy";
+}
+
+function assertBindPayloadEmptyWhenInactive(
+  bindPayload: JsonDocument | null,
+  portId?: string,
+): void {
   if (bindPayload === undefined || bindPayload === null) {
     return;
   }
   if (typeof bindPayload !== "object" || Array.isArray(bindPayload)) {
-    throw new ObpError(
-      "VALIDATION",
-      "bind_payload must be omitted or empty when port has no bind_policy",
-    );
+    throw new ObpError("VALIDATION", emptyPolicyMessage(portId));
   }
   if (Object.keys(bindPayload as object).length > 0) {
-    throw new ObpError(
-      "VALIDATION",
-      "bind_payload must be omitted or empty when port has no bind_policy",
-    );
+    throw new ObpError("VALIDATION", emptyPolicyMessage(portId));
   }
 }
 
@@ -229,6 +232,7 @@ export async function validateOutboundNbcTurnBind(input: {
     bindPolicy,
     bindPayload: input.body.bind_payload,
     validateBindPayload: input.validateBindPayload,
+    portId: input.body.bind_port_id,
   });
 }
 
@@ -237,10 +241,11 @@ export async function normalizeNbcBindPayload(input: {
   bindPolicy: JsonDocument | null;
   bindPayload: JsonDocument | null;
   validateBindPayload?: NbcBindPolicyValidateFn | undefined;
+  portId?: string;
 }): Promise<JsonDocument> {
-  const { bindPolicy, bindPayload, validateBindPayload } = input;
+  const { bindPolicy, bindPayload, validateBindPayload, portId } = input;
   if (!isActiveBindPolicy(bindPolicy)) {
-    assertBindPayloadEmptyWhenInactive(bindPayload);
+    assertBindPayloadEmptyWhenInactive(bindPayload, portId);
     return bindPayload;
   }
   if (validateBindPayload === undefined) {
@@ -302,6 +307,7 @@ export async function validateNbcBind(input: ValidateNbcBindInput): Promise<Vali
       bindPolicy,
       bindPayload,
       validateBindPayload,
+      portId: port.id,
     });
     return { ok: true, normalizedBindPayload };
   } catch (e) {

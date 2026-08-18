@@ -223,7 +223,7 @@ export function nbcChainGraphToFlow(g: NbcChainGraph): {
       data: {
         partyLabel: portPartyLabel,
         title: `${shortId(p.id)}${terminalMark}`,
-        subtitle: p.type.slice(0, 40),
+        subtitle: p.kind.slice(0, 40),
         detail: p,
       } satisfies NbcChainPortNodeData,
     });

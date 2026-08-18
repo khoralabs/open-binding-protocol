@@ -25,7 +25,8 @@ structure NbcOfferSpec {
 structure NbcPortSpec {
     /// Client placeholder; persistence assigns the canonical **`khora.obp#Port.id`**.
     id: String
-    type: String
+    /// Affordance kind (e.g. slot). Not JSON Schema **`type`**.
+    kind: String
     /// Counterparty-facing affordance copy (maps to **`khora.obp#Port.promise`**).
     @default("")
     promise: String

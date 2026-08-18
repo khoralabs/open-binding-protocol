@@ -67,7 +67,7 @@ describe("exposePort + isPortExposed", () => {
       offerId: offer.id,
       port: {
         id: "",
-        type: "slot",
+        kind: "slot",
         promise: "fill me",
         ref: "",
       },
@@ -95,7 +95,7 @@ describe("max_bindings enforcement", () => {
     });
     const { port } = await client.exposePort({
       offerId: offerA.id,
-      port: { id: "p-cap", type: "slot", promise: "p", ref: "" },
+      port: { id: "p-cap", kind: "slot", promise: "p", ref: "" },
       max_bindings: 1,
     });
     await client.bindPort({
@@ -125,7 +125,7 @@ describe("bindPort + listBinds", () => {
     });
     const { port } = await client.exposePort({
       offerId: offer.id,
-      port: { id: "", type: "slot", promise: "p", ref: "" },
+      port: { id: "", kind: "slot", promise: "p", ref: "" },
     });
     await client.bindPort({ offerId: offer.id, portId: port.id, bind_payload: null });
     await expect(
@@ -147,7 +147,7 @@ describe("bindPort + listBinds", () => {
     });
     const { port } = await client.exposePort({
       offerId: offer.id,
-      port: { id: "", type: "slot", promise: "p", ref: "" },
+      port: { id: "", kind: "slot", promise: "p", ref: "" },
     });
     await client.bindPort({
       offerId: offer.id,
@@ -171,7 +171,7 @@ describe("getPortsSnapshot", () => {
     });
     await client.exposePort({
       offerId: offer.id,
-      port: { id: "", type: "slot", promise: "p", ref: "" },
+      port: { id: "", kind: "slot", promise: "p", ref: "" },
     });
     const snap = await client.getPortsSnapshot();
     expect(snap.entries.length).toBeGreaterThan(0);

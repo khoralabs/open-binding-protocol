@@ -6,8 +6,8 @@ Wall-clock bind windows use **`expires_at_ms`** evaluated with peer-derived HLC 
 
 | Field | Evaluation |
 |-------|------------|
-| `expires_turn` | `turn_seq < expires_turn` |
-| `expires_at_ms` | `effective_now_ms < expires_at_ms` (HLC) |
+| `expires_turn` | Bindable when `expires_turn === 0` (disabled) or `turn_seq < expires_turn` |
+| `expires_at_ms` | Bindable when `expires_at_ms === 0` (no wall-clock expiry) or `effective_now_ms < expires_at_ms` (HLC) |
 
 ## HLC
 

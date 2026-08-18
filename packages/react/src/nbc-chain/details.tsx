@@ -102,8 +102,8 @@ export function NbcChainNodeDetails({ node, graph, ...rest }: NbcChainNodeDetail
           <dd data-slot="nbc-chain-details-dd">
             <code>{p.id}</code>
           </dd>
-          <dt data-slot="nbc-chain-details-dt">Type</dt>
-          <dd data-slot="nbc-chain-details-dd">{p.type}</dd>
+          <dt data-slot="nbc-chain-details-dt">Kind</dt>
+          <dd data-slot="nbc-chain-details-dd">{p.kind}</dd>
           <dt data-slot="nbc-chain-details-dt">Promise</dt>
           <dd data-slot="nbc-chain-details-dd" data-variant="promise">
             {p.promise || "—"}

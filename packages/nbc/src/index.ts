@@ -1,3 +1,4 @@
+export { bindPayloadSchemaForPort } from "./bind-payload-schema";
 export type { BindPolicyJsonSchema } from "./bind-policy/index";
 export {
   formatAjvErrorsForAgent,
@@ -7,6 +8,7 @@ export {
   validateBindPolicyAtExpose,
   validateNbcBindPayloadForPort,
 } from "./bind-policy/index";
+export { availablePortsFor, whoShouldAct } from "./nbc-acting-party";
 export {
   type CollectNbcChainGraphOptions,
   collectNbcChainGraph,
@@ -54,7 +56,6 @@ export {
   validateNbcBind,
   validateOutboundNbcTurnBind,
 } from "./nbc-invariants";
-export { type ResolvePortRefResult, resolveCanonicalPortId } from "./nbc-ref";
 export {
   type BindablePortEntry,
   getBindablePortsForParty,
@@ -77,3 +78,19 @@ export {
   parseNbcTurnBody,
   serializeNbcTurnBodyForWire,
 } from "./nbc-types";
+export { createObpStandardSchema, type ObpStandardSchema } from "./standard-schema";
+export {
+  type ContinueTurn,
+  continueTurnSchema,
+  continueTurnSchemaForPorts,
+  type HostTurnBody,
+  hostTurnToNbcBody,
+  isContinueTurn,
+  isLeaveTurn,
+  isOpeningTurn,
+  type LeaveTurn,
+  leaveTurnSchema,
+  type OpeningPort,
+  type OpeningTurn,
+  openingTurnSchema,
+} from "./turn-profiles";

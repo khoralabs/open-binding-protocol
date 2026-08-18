@@ -5,7 +5,7 @@ Implementation packages. Protocol theory and Smithy live under [`docs/`](../docs
 | Directory | Package | Role |
 |-----------|---------|------|
 | `core/` | `@khoralabs/obp-core` | Errors, primitives, model, byte-stream; `./persistence`, `./sqlite` |
-| `nbc/` | `@khoralabs/obp-nbc` | NBC rules (TS); `./bind-policy` |
+| `nbc/` | `@khoralabs/obp-nbc` | NBC rules (TS), Standard Schema turn profiles, snapshot helpers; `./bind-policy` |
 | `wire/` | `@khoralabs/obp-wire` | Frame + session; `./http2`, `./ws` |
 | `react/` | `@khoralabs/obp-react` | NBC chain visualization |
 

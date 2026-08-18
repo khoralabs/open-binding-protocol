@@ -12,7 +12,7 @@ type Waiter = {
 
 export type NegotiationCoordinatorHooksArgs = Pick<
   MultiplexChainHooks,
-  "onIncomingOffer" | "onTerminate"
+  "onIncomingOffer" | "onTerminate" | "onGraphAdvanced"
 >;
 
 export type WaitForTurnOptions = {
@@ -96,6 +96,9 @@ export function createNegotiationCoordinator(inner: NegotiationCoordinatorHooksA
     async onTerminate(reason, code, session) {
       rejectAll(new Error("chain terminated"));
       await inner.onTerminate?.(reason, code, session);
+    },
+    onGraphAdvanced(event, session) {
+      return inner.onGraphAdvanced?.(event, session);
     },
   };
 

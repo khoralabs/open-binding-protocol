@@ -30,6 +30,9 @@ function migrateObpSchema(db: Database): void {
   if (portCols.includes("nbc_expires_at_relay_ms")) {
     db.run("ALTER TABLE obp_ports DROP COLUMN nbc_expires_at_relay_ms");
   }
+  if (portCols.includes("type") && !portCols.includes("kind")) {
+    db.run("ALTER TABLE obp_ports RENAME COLUMN type TO kind");
+  }
 }
 
 /** Open (or create) a SQLite file and initialize OBP tables. */

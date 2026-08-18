@@ -27,7 +27,7 @@ const textBindSchema = {
   },
 };
 
-const basePortFields = { type: "t" as const, promise: "" as const };
+const basePortFields = { kind: "t" as const, promise: "" as const };
 
 const win = (turn: number, epoch = 0) => ({
   nbc_expires_turn: turn,
@@ -82,7 +82,7 @@ describe("validateNbcBind", () => {
   };
   const port: Port = {
     id: "p1",
-    type: "slot",
+    kind: "slot",
     promise: "x",
     ref: "",
   };
@@ -181,8 +181,8 @@ describe("validateNbcBind", () => {
   });
 
   test("N2 counts ref alias toward canonical cap", async () => {
-    const canonical: Port = { id: "a", type: "t", promise: "", ref: "" };
-    const alias: Port = { id: "b", type: "t", promise: "", ref: "a" };
+    const canonical: Port = { id: "a", kind: "t", promise: "", ref: "" };
+    const alias: Port = { id: "b", kind: "t", promise: "", ref: "a" };
     const aliasPorts = new Map<string, Port>([
       ["a", canonical],
       ["b", alias],
@@ -320,7 +320,7 @@ describe("validateOutboundNbcTurnBind", () => {
       ports: [
         {
           id: "p1",
-          type: "t",
+          kind: "t",
           promise: "",
           expires_turn: 0,
           bind_policy: textBindSchema,
@@ -351,7 +351,7 @@ describe("validateOutboundNbcTurnBind", () => {
     });
     const { port } = await client.exposePort({
       offerId: offer.id,
-      port: { id: "p1", type: "t", promise: "", ref: "" },
+      port: { id: "p1", kind: "t", promise: "", ref: "" },
       bind_policy: textBindSchema,
     });
     const body = parseNbcTurnBody({

@@ -44,12 +44,15 @@ export function validateBindPolicyAtExpose(bindPolicy: JsonDocument | null): voi
 export function validateNbcBindPayloadForPort(
   bindPolicy: JsonDocument | null,
   raw: unknown,
+  portId?: string,
 ): Record<string, unknown> {
   if (!policyIsActive(bindPolicy)) {
     if (!isEmptyBindPayload(raw)) {
       throw new ObpError(
         "VALIDATION",
-        "bind_payload must be omitted or empty when port has no bind_policy",
+        portId !== undefined && portId.length > 0
+          ? `bind_payload must be omitted or empty when port ${portId} has no bind_policy`
+          : "bind_payload must be omitted or empty when port has no bind_policy",
       );
     }
     return {};

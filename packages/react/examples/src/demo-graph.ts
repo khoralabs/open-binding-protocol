@@ -28,7 +28,7 @@ export function demoNbcChainGraph(): NbcChainGraph {
     ports: [
       {
         id: "port-a",
-        type: "afford-a",
+        kind: "afford-a",
         promise: "Affordance A.",
         ref: "",
         expires_turn: 0,
@@ -38,7 +38,7 @@ export function demoNbcChainGraph(): NbcChainGraph {
       },
       {
         id: "port-b",
-        type: "afford-b",
+        kind: "afford-b",
         promise: "Affordance B.",
         ref: "",
         expires_turn: 0,
@@ -48,7 +48,7 @@ export function demoNbcChainGraph(): NbcChainGraph {
       },
       {
         id: "port-next",
-        type: "next",
+        kind: "next",
         promise: "Next-step affordance.",
         ref: "",
         expires_turn: 0,

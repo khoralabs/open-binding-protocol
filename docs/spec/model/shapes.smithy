@@ -16,10 +16,11 @@ structure Offer {
     type: String
 }
 
-/// Affordance: a continuation point — **identity**, **`type`**, **`promise`**, **`ref`**. NBC bind-window timing is **not** on this core shape; see **`khora.obp.nbc#NbcPortSpec`** and **`khora.obp#ExposePortInput`** projection fields. **How many** binds and **terminal UX context** are **`khora.obp.nbc#NbcPortExposePolicy`** when NBC applies. Row commit ordering (**`created_seq`**) is NBC / persistence, not on this shape.
+/// Affordance: a continuation point — **identity**, **`kind`**, **`promise`**, **`ref`**. **`kind`** is the affordance discriminator (not JSON Schema **`type`**). NBC bind-window timing is **not** on this core shape; see **`khora.obp.nbc#NbcPortSpec`** and **`khora.obp#ExposePortInput`** projection fields. **How many** binds and **terminal UX context** are **`khora.obp.nbc#NbcPortExposePolicy`** when NBC applies. Row commit ordering (**`created_seq`**) is NBC / persistence, not on this shape.
 structure Port {
     id: String
-    type: String
+    /// Affordance kind (e.g. slot). Do not confuse with JSON Schema **`type`** on **`bind_policy`**.
+    kind: String
     /// Counterparty-facing affordance copy (what this port offers or invites); implementations enforcing UX SHOULD require non-empty on **ExposePort**.
     @default("")
     promise: String

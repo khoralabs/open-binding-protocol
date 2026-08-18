@@ -29,13 +29,14 @@ export type Offer = {
 
 /**
  * Affordance / continuation point.
+ * `kind` is the affordance discriminator (not JSON Schema `type`).
  * `promise` defaults to `""` (empty when not specified on wire).
  * `ref` defaults to `""` (non-empty aliases another port; implementations MUST detect cycles).
  * NBC bind windows: `NbcPortSpec` + persistence projection, not on this shape.
  */
 export type Port = {
   id: string;
-  type: string;
+  kind: string;
   promise: string;
   ref: string;
 };

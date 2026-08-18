@@ -33,7 +33,7 @@ describe("SqliteObpPersistenceStrategy", () => {
       offerId: offer.id,
       port: {
         id: "",
-        type: "slot",
+        kind: "slot",
         promise: "p",
         ref: "",
       },
@@ -62,7 +62,7 @@ describe("SqliteObpPersistenceStrategy", () => {
     };
     const { port } = await client.exposePort({
       offerId: offer.id,
-      port: { id: "", type: "slot", promise: "p", ref: "" },
+      port: { id: "", kind: "slot", promise: "p", ref: "" },
       bind_policy: policy,
     });
     const pr = await client.getPortBindPolicy({ portId: port.id });
@@ -84,7 +84,7 @@ describe("SqliteObpPersistenceStrategy", () => {
     await expect(
       client.exposePort({
         offerId: offer.id,
-        port: { id: "", type: "slot", promise: "p", ref: "" },
+        port: { id: "", kind: "slot", promise: "p", ref: "" },
         bind_policy: {
           type: "object",
           notARealKeyword: true,
@@ -104,7 +104,7 @@ describe("SqliteObpPersistenceStrategy", () => {
     });
     const { port } = await client.exposePort({
       offerId: offer.id,
-      port: { id: "", type: "slot", promise: "p", ref: "" },
+      port: { id: "", kind: "slot", promise: "p", ref: "" },
     });
     const pr = await client.getPortExposePolicy({ portId: port.id });
     expect(pr.result.kind).toBe("found");
@@ -130,12 +130,12 @@ describe("SqliteObpPersistenceStrategy", () => {
     });
     const { port } = await client.exposePort({
       offerId: offerA.id,
-      port: { id: "shared", type: "slot", promise: "p", ref: "" },
+      port: { id: "shared", kind: "slot", promise: "p", ref: "" },
       max_bindings: 1,
     });
     await client.exposePort({
       offerId: offerB.id,
-      port: { id: "shared", type: "slot", promise: "p", ref: "" },
+      port: { id: "shared", kind: "slot", promise: "p", ref: "" },
     });
     await client.bindPort({
       offerId: offerA.id,
@@ -168,12 +168,12 @@ describe("SqliteObpPersistenceStrategy", () => {
     });
     const { port } = await client.exposePort({
       offerId: offerA.id,
-      port: { id: "admit-port", type: "slot", promise: "p", ref: "" },
+      port: { id: "admit-port", kind: "slot", promise: "p", ref: "" },
       max_bindings: 1,
     });
     await client.exposePort({
       offerId: offerB.id,
-      port: { id: "admit-port", type: "slot", promise: "p", ref: "" },
+      port: { id: "admit-port", kind: "slot", promise: "p", ref: "" },
     });
     await client.bindPort({
       offerId: offerA.id,
@@ -216,12 +216,12 @@ describe("SqliteObpPersistenceStrategy", () => {
     });
     const { port } = await client.exposePort({
       offerId: offerA.id,
-      port: { id: "cap-port", type: "slot", promise: "p", ref: "" },
+      port: { id: "cap-port", kind: "slot", promise: "p", ref: "" },
       max_bindings: 1,
     });
     await client.exposePort({
       offerId: offerB.id,
-      port: { id: "cap-port", type: "slot", promise: "p", ref: "" },
+      port: { id: "cap-port", kind: "slot", promise: "p", ref: "" },
     });
 
     const results = await Promise.allSettled([
@@ -251,7 +251,7 @@ describe("SqliteObpPersistenceStrategy", () => {
       offerId: offer.id,
       port: {
         id: "",
-        type: "slot",
+        kind: "slot",
         promise: "",
         ref: "",
       },
