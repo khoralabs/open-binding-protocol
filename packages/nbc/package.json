@@ -28,6 +28,11 @@
       "types": "./src/bind-policy/index.ts",
       "import": "./src/bind-policy/index.ts",
       "default": "./src/bind-policy/index.ts"
+    },
+    "./host": {
+      "types": "./src/host/index.ts",
+      "import": "./src/host/index.ts",
+      "default": "./src/host/index.ts"
     }
   },
   "scripts": {
