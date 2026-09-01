@@ -27,6 +27,7 @@ A stack may be OBP-conformant without NBC. NBC is a named additive conformance l
 | Package | Description |
 |---------|-------------|
 | `@khoralabs/obp-core` | Errors, primitives, model types, byte-stream; `./persistence`, `./sqlite` |
+| `@khoralabs/obp-algebra` | Open-system algebra; `./interface`, `./atom`, `./commitment`, `./intersection` |
 | `@khoralabs/obp-nbc` | NBC bind-time checks, `applyNbcTurn`, Standard Schema turn profiles, snapshot helpers; `./bind-policy` validators |
 | `@khoralabs/obp-wire` | Frame DAG + session Merkle; `./http2`, `./ws` transport bindings |
 | `@khoralabs/obp-react` | React NBC chain visualization (XYFlow) |

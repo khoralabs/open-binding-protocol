@@ -1,6 +1,6 @@
 # OBP documentation
 
-- **[Theory](theory/)** — narrative overview, layering, peer time, transport confidentiality
+- **[Theory](theory/)** — narrative overview, [algebra](theory/algebra.md), layering, peer time, transport confidentiality
 - **[Spec](spec/)** — normative Smithy models (`khora.obp`, NBC, frame, session, transport)
 
 Validate specs:
@@ -16,6 +16,7 @@ Requires the [Smithy CLI](https://smithy.io/2.0/guides/smithy-cli/cli_installati
 | Package | Role |
 |---------|------|
 | `@khoralabs/obp-core` | Foundation + graph store (`./persistence`, `./sqlite`) |
+| `@khoralabs/obp-algebra` | Wiring calculus + commitments (`./interface`, `./atom`, `./commitment`, `./intersection`) |
 | `@khoralabs/obp-nbc` | Convention layer + bind-policy validators |
 | `@khoralabs/obp-wire` | Frame/session runtime + transport bindings (`./http2`, `./ws`) |
 | `@khoralabs/obp-react` | Optional UI |
