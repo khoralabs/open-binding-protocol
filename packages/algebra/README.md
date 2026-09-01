@@ -1,6 +1,6 @@
 # @khoralabs/obp-algebra
 
-Open-system algebra for OBP: wiring calculus, port atoms, library commitments, and intersection proof stubs.
+Port-set operations, canonical port atoms, Merkle library commitments, and intersection stubs for OBP.
 
 ## Install
 
@@ -16,7 +16,7 @@ npm install @khoralabs/obp-algebra @khoralabs/obp-core
 | `@khoralabs/obp-algebra/interface` | `compose`, `parallel`, `hide`, `rename`, `choice`, `RenameFamily` |
 | `@khoralabs/obp-algebra/atom` | `portAtom`, `Repertoire`, `structuralComposability` |
 | `@khoralabs/obp-algebra/commitment` | `commitLibrary`, `proveMembership`, `verifyMembership` |
-| `@khoralabs/obp-algebra/intersection` | PSI/ZK stubs (v1: interfaces + `NotImplementedIntersectionError`) |
+| `@khoralabs/obp-algebra/intersection` | Stub APIs (v1: throw `NotImplementedIntersectionError`) |
 
 Theory: [`docs/theory/algebra.md`](../../docs/theory/algebra.md).
 
@@ -59,4 +59,4 @@ bun test packages/algebra
 
 ## Scope
 
-Depends on `@khoralabs/obp-core` only. Does not import NBC, wire, Khora, or host products. Intersection crypto fills `./intersection` in a future release without breaking structural APIs.
+Depends on `@khoralabs/obp-core` only. Does not import NBC, wire, or host products.

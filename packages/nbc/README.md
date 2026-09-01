@@ -1,6 +1,6 @@
 # `@khoralabs/obp-nbc`
 
-NBC (Named Binding Contract) rules for OBP.
+Negotiated Binding Convention (NBC) rules for OBP.
 
 ```ts
 import {

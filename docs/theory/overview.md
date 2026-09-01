@@ -1,57 +1,58 @@
-# OBP — Open Binding Protocol
+# OBP overview
 
-OBP is a **wiring calculus for agent affordances**. A Party publishes Offers; each Offer exposes Ports it provides and binds Ports it requires. When a peer binds a port, they make a verifiable commitment to an affordance the counterparty exposed.
+Open Binding Protocol (OBP) models agents and services as a typed graph: Parties publish Offers that expose and bind named Ports.
+
+## Graph model
 
 ```
 Party ──EXTENDS──▶ Offer ──EXPOSES──▶ Port
                   Offer ──BINDS──▶   Port
 ```
 
-An Offer is best read as a module with imports and exports:
-`Offer : BoundPorts → ExposedPorts`
+| Node / edge | Meaning |
+|-------------|---------|
+| `Party` | Agent, organization, or service that publishes offers |
+| `Offer` | Interface object — required ports (`in`) and exposed ports (`out`) |
+| `Port` | Named interface point; OBP does not interpret port semantics |
+| `EXTENDS` | Party owns this Offer |
+| `EXPOSES` | Offer exports this Port |
+| `BINDS` | Offer requires this Port (bind edge in persistence) |
 
-With NBC (Negotiated Binding Convention), a bilateral negotiation is a co-authored signed Frame DAG — each TURN is chained by `p_hash` and signed by its sender, so neither party can unilaterally tamper with or reorder the shared transcript. Accepted TURN effects are projected into the OBP persistence graph.
+An Offer is read as:
 
-OBP itself is not policy, authorization, expiry, or execution — it is the structural substrate those layers operate on.
-
-## Three layers
-
-- **Graph** (`khora.obp`) — the typed DAG: parties, offers, ports, and bind edges. Thin shapes; NBC bind-window timing and capacity live in the NBC layer, not on the core shapes.
-- **Convention** (`khora.obp.nbc`) — NBC: when a bind is admissible. Expiry windows, `max_bindings` capacity, bind-payload validation (N4), concurrent bind atomicity, and revocation (N1–N9).
-- **Transport** (`khora.obp.frame`, `khora.obp.session`) — the co-authored Frame DAG and session Merkle log. Each `SessionEnvelope` carries `Checkpoint.root_hex` over all prior operations; tampered or dropped frames produce a detectable root mismatch.
-
-A stack may be OBP-conformant without NBC. NBC is a named additive conformance layer.
-
-## Packages
-
-| Package | Description |
-|---------|-------------|
-| `@khoralabs/obp-core` | Errors, primitives, model types, byte-stream; `./persistence`, `./sqlite` |
-| `@khoralabs/obp-algebra` | Open-system algebra; `./interface`, `./atom`, `./commitment`, `./intersection` |
-| `@khoralabs/obp-nbc` | NBC bind-time checks, `applyNbcTurn`; `./bind-policy` validators |
-| `@khoralabs/obp-wire` | Frame DAG + session Merkle; `./http2`, `./ws` transport bindings |
-| `@khoralabs/obp-react` | React NBC chain visualization (XYFlow) |
-
-Theory and Smithy specs: [`docs/`](../README.md) ([algebra](./algebra.md)). Package index: [`packages/README.md`](../../packages/README.md).
-
-## Setup
-
-```bash
-bun install
+```
+in(O)  = { p | O binds p }
+out(O) = { p | O exposes p }
 ```
 
-## Development
+Two offers can connect when one exposes a port the other binds.
 
-```bash
-bun run check:write     # format (Biome)
-bun run check           # lint/format check
-bun run typecheck       # tsc across all packages
-bun test                # all tests
-bash docs/spec/validate.sh   # Smithy (requires Smithy CLI)
-```
+## Protocol layers
 
-Husky wires `check` on pre-commit and `check + typecheck + test` on pre-push.
+OBP splits into layers that map to Smithy namespaces and npm packages:
 
-## Contributing
+| Layer | Namespace | Package | Responsibility |
+|-------|-----------|---------|----------------|
+| Graph | `khora.obp` | `@khoralabs/obp-core` | Party/Offer/Port shapes, persistence |
+| Convention | `khora.obp.nbc` | `@khoralabs/obp-nbc` | When a bind is admissible (expiry, capacity, payload validation) |
+| Transport | `khora.obp.frame`, `khora.obp.session` | `@khoralabs/obp-wire` | Signed Frame DAG, session Merkle log |
+| Interface ops | — | `@khoralabs/obp-algebra` | Port-set composition, atoms, Merkle library commitments (optional) |
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). Security issues: [SECURITY.md](SECURITY.md).
+With NBC, peers co-author a signed Frame DAG. Each TURN chains via `p_hash` and is signed by its sender. Accepted effects project into the persistence graph.
+
+A deployment may use the graph layer alone. NBC and wire are additive conformance layers. See [layering.md](./layering.md).
+
+## What OBP does not define
+
+Policy, authorization, execution, and business semantics sit above the graph. NBC adds bind-window and capacity rules but not host policy. Wire adds transport integrity, not application logic.
+
+## Further reading
+
+| Topic | Doc |
+|-------|-----|
+| Layer boundaries and dependencies | [layering.md](./layering.md) |
+| `compose`, `parallel`, port atoms, commitments | [algebra.md](./algebra.md) |
+| HLC peer time for NBC expiry | [peer-time.md](./peer-time.md) |
+| MLS / transport confidentiality | [transport-confidentiality.md](./transport-confidentiality.md) |
+| Normative shapes | [../spec/](../README.md#spec) |
+| Package index | [../../packages/README.md](../../packages/README.md) |

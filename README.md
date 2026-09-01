@@ -1,43 +1,64 @@
 # OBP — Open Binding Protocol
 
-OBP is a **wiring calculus for agent affordances**. A Party publishes Offers; each Offer exposes Ports it provides and binds Ports it requires. When a peer binds a port, they make a verifiable commitment to an affordance the counterparty exposed.
+Typed graph of Parties, Offers, and Ports, with optional Negotiated Binding Convention (NBC) and wire packages.
+
+## Table of Contents
+
+- [Background](#background)
+- [Packages](#packages)
+- [Install](#install)
+- [Development](#development)
+- [Contributing](#contributing)
+- [License](#license)
+
+## Background
+
+A **Party** publishes **Offers**. Each Offer **exposes** Ports it provides and **binds** Ports it requires. A bind creates an edge in the persistence graph from a requiring Offer to an exposed Port.
 
 ```
 Party ──EXTENDS──▶ Offer ──EXPOSES──▶ Port
                   Offer ──BINDS──▶   Port
 ```
 
-An Offer is best read as a module with imports and exports:
-`Offer : BoundPorts → ExposedPorts`
+Read an Offer as a module with imports and exports: required ports are `in(O)`, exposed ports are `out(O)`.
 
-With NBC (Negotiated Binding Convention), a bilateral negotiation is a co-authored signed Frame DAG — each TURN is chained by `p_hash` and signed by its sender, so neither party can unilaterally tamper with or reorder the shared transcript. Accepted TURN effects are projected into the OBP persistence graph.
+With **NBC** (Negotiated Binding Convention), peers exchange signed **Frames** in a chained DAG (`p_hash` links each TURN to its predecessor). Accepted TURN effects are projected into the OBP persistence graph.
 
-OBP itself is not policy, authorization, expiry, or execution — it is the structural substrate those layers operate on.
+OBP core is the graph model and store. Policy, authorization, expiry, and execution live in host layers or optional packages (NBC, wire).
 
-## Three layers
+### Protocol layers
 
-- **Graph** (`khora.obp`) — the typed DAG: parties, offers, ports, and bind edges. Thin shapes; NBC bind-window timing and capacity live in the NBC layer, not on the core shapes.
-- **Convention** (`khora.obp.nbc`) — NBC: when a bind is admissible. Expiry windows, `max_bindings` capacity, bind-payload validation (N4), concurrent bind atomicity, and revocation (N1–N9).
-- **Transport** (`khora.obp.frame`, `khora.obp.session`) — the co-authored Frame DAG and session Merkle log. Each `SessionEnvelope` carries `Checkpoint.root_hex` over all prior operations; tampered or dropped frames produce a detectable root mismatch.
+| Layer | Smithy namespace | Package |
+|-------|------------------|---------|
+| Graph | `khora.obp` | `@khoralabs/obp-core` |
+| Convention | `khora.obp.nbc` | `@khoralabs/obp-nbc` |
+| Transport | `khora.obp.frame`, `khora.obp.session` | `@khoralabs/obp-wire` |
+| Interface ops (optional) | — | `@khoralabs/obp-algebra` |
 
-A stack may be OBP-conformant without NBC. NBC is a named additive conformance layer.
+A stack may be OBP-conformant without NBC. See [docs/theory/layering.md](docs/theory/layering.md) and [docs/](docs/README.md).
 
 ## Packages
 
-| Package | Description |
-|---------|-------------|
+| Package | Role |
+|---------|------|
 | `@khoralabs/obp-core` | Errors, primitives, model types, byte-stream; `./persistence`, `./sqlite` |
-| `@khoralabs/obp-algebra` | Open-system algebra; `./interface`, `./atom`, `./commitment`, `./intersection` |
-| `@khoralabs/obp-nbc` | NBC bind-time checks, `applyNbcTurn`, Standard Schema turn profiles, snapshot helpers; `./bind-policy` validators |
-| `@khoralabs/obp-wire` | Frame DAG + session Merkle; `./http2`, `./ws` transport bindings |
+| `@khoralabs/obp-algebra` | `compose` / `parallel` / `hide` / `rename` / `choice`, port atoms, Merkle library commitments; `./interface`, `./atom`, `./commitment`, `./intersection` |
+| `@khoralabs/obp-nbc` | NBC bind-time checks, `applyNbcTurn`, Standard Schema turn profiles; `./bind-policy` |
+| `@khoralabs/obp-wire` | Frame DAG + session Merkle log; `./http2`, `./ws` |
 | `@khoralabs/obp-react` | React NBC chain visualization (XYFlow) |
 
-Theory and Smithy specs: [`docs/`](docs/README.md). Package index: [`packages/README.md`](packages/README.md).
+Package index: [`packages/README.md`](packages/README.md).
 
-## Setup
+## Install
 
 ```bash
 bun install
+```
+
+Published packages install individually, for example:
+
+```bash
+npm install @khoralabs/obp-core
 ```
 
 ## Development
@@ -55,3 +76,7 @@ Husky wires `check` on pre-commit and `check + typecheck + test` on pre-push.
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). Security issues: [SECURITY.md](SECURITY.md).
+
+## License
+
+MIT
