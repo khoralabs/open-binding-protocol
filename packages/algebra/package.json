@@ -1,6 +1,6 @@
 {
   "name": "@khoralabs/obp-algebra",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "OBP open-system algebra: interface wiring, port atoms, library commitments; ./interface, ./atom, ./commitment, ./intersection.",
   "license": "MIT",
   "type": "module",
