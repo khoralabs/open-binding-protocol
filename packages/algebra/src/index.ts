@@ -1,1 +1,1 @@
-/** Barrel re-exports added as subpaths land (interface, atom). */
+export * from "./interface/index.ts";
