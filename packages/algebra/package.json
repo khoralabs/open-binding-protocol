@@ -1,0 +1,62 @@
+{
+  "name": "@khoralabs/obp-algebra",
+  "version": "0.2.0",
+  "description": "OBP open-system algebra: interface wiring, port atoms, library commitments; ./interface, ./atom, ./commitment, ./intersection.",
+  "license": "MIT",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/khoralabs/open-binding-protocol.git",
+    "directory": "packages/algebra"
+  },
+  "homepage": "https://github.com/khoralabs/open-binding-protocol/tree/main/packages/algebra#readme",
+  "bugs": "https://github.com/khoralabs/open-binding-protocol/issues",
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./interface": {
+      "types": "./src/interface/index.ts",
+      "import": "./src/interface/index.ts",
+      "default": "./src/interface/index.ts"
+    },
+    "./atom": {
+      "types": "./src/atom/index.ts",
+      "import": "./src/atom/index.ts",
+      "default": "./src/atom/index.ts"
+    },
+    "./commitment": {
+      "types": "./src/commitment/index.ts",
+      "import": "./src/commitment/index.ts",
+      "default": "./src/commitment/index.ts"
+    },
+    "./intersection": {
+      "types": "./src/intersection/index.ts",
+      "import": "./src/intersection/index.ts",
+      "default": "./src/intersection/index.ts"
+    }
+  },
+  "scripts": {
+    "build": "bun run ../../scripts/build-package.ts .",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@khoralabs/obp-core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.14"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}

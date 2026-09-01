@@ -8,6 +8,7 @@ export type PublishablePackage = {
 
 export const PUBLISH_ORDER: PublishablePackage[] = [
   { name: "@khoralabs/obp-core", dir: "packages/core" },
+  { name: "@khoralabs/obp-algebra", dir: "packages/algebra" },
   { name: "@khoralabs/obp-nbc", dir: "packages/nbc" },
   { name: "@khoralabs/obp-wire", dir: "packages/wire" },
   { name: "@khoralabs/obp-react", dir: "packages/react" },
