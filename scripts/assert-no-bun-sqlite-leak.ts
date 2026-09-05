@@ -11,12 +11,7 @@ const ROOT = join(import.meta.dir, "..");
 const ALLOWED_PREFIXES = ["packages/core/src/persistence/sqlite/"];
 
 /** Roots to scan for leaks. */
-const SCAN_ROOTS = [
-  "packages/core/src",
-  "packages/nbc/src",
-  "packages/wire/src",
-  "packages/react/src",
-];
+const SCAN_ROOTS = ["packages/core/src", "packages/nbc/src", "packages/wire/src"];
 
 const LEAK_RE = /(?:from|require\()\s*["']bun:sqlite["']/;
 

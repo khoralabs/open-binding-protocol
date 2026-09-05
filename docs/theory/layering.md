@@ -43,13 +43,10 @@ flowchart TB
   algebra[obp-algebra]
   nbc[obp-nbc]
   wire[obp-wire]
-  react[obp-react]
   core --> algebra
   core --> nbc
   core --> wire
   nbc --> wire
-  nbc --> react
-  core --> react
 ```
 
 - `obp-core` has no dependency on nbc or wire at runtime. NBC expose-time validation is injected via optional `validateBindPolicyAtExpose` callback.

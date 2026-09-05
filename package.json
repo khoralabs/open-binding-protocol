@@ -4,15 +4,14 @@
   "license": "MIT",
   "type": "module",
   "workspaces": [
-    "packages/*",
-    "packages/react/examples"
+    "packages/*"
   ],
   "scripts": {
     "check": "biome check .",
     "check:write": "biome check --write .",
     "format": "biome check --write .",
     "format:check": "biome check .",
-    "typecheck": "tsc --noEmit && tsc --noEmit -p packages/react/examples/tsconfig.json",
+    "typecheck": "tsc --noEmit",
     "assert:no-bun-sqlite-leak": "bun run scripts/assert-no-bun-sqlite-leak.ts",
     "build": "bun run scripts/build-packages.ts",
     "release:bump": "bun run scripts/bump-versions.ts",

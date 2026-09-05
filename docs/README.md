@@ -43,4 +43,5 @@ Implementation lives under [`packages/`](../packages/README.md):
 | `@khoralabs/obp-algebra` | Port-set ops, atoms, Merkle commitments |
 | `@khoralabs/obp-nbc` | Negotiated Binding Convention + `./bind-policy` |
 | `@khoralabs/obp-wire` | Frame/session runtime + `./http2`, `./ws` |
-| `@khoralabs/obp-react` | Optional NBC chain UI |
+
+React UI: [`khoralabs/react/obp`](https://github.com/khoralabs/react) registry items.
