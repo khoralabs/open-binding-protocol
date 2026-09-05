@@ -1,6 +1,6 @@
 {
   "name": "@khoralabs/obp-nbc",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "OBP Negotiated Binding Convention rules; ./bind-policy for expose-time schema checks.",
   "license": "MIT",
   "type": "module",

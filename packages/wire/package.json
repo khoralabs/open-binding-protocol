@@ -1,6 +1,6 @@
 {
   "name": "@khoralabs/obp-wire",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "OBP wire: frame + session; ./http2 and ./ws transports.",
   "license": "MIT",
   "type": "module",

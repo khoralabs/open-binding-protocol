@@ -1,6 +1,6 @@
 {
   "name": "@khoralabs/obp-core",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "OBP foundation: errors, primitives, model, byte-stream; ./persistence and ./sqlite.",
   "license": "MIT",
   "type": "module",
