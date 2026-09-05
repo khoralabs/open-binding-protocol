@@ -1,4 +1,6 @@
 import "./app.css";
+import type { Edge, Node } from "@xyflow/react";
+import { type ReactNode, useMemo } from "react";
 import {
   NbcChain,
   NbcChainDefaultLayout,
@@ -6,9 +8,7 @@ import {
   NbcChainEmptySelectionHint,
   NbcChainNodeDetails,
   nbcChainGraphToFlow,
-} from "@khoralabs/obp-react";
-import type { Edge, Node } from "@xyflow/react";
-import { type ReactNode, useMemo } from "react";
+} from "@/components/obp";
 import { demoNbcChainGraph } from "./demo-graph.ts";
 
 function SectionTitle({ children }: { children: ReactNode }) {
@@ -39,9 +39,11 @@ export function App() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
       <header className="mb-8">
-        <h1 className="text-2xl font-semibold text-neutral-900">@khoralabs/obp-react · NbcChain</h1>
+        <h1 className="text-2xl font-semibold text-neutral-900">OBP NbcChain (registry)</h1>
         <p className="mt-2 max-w-2xl text-sm text-neutral-600">
-          Standalone detail panels (no canvas), a manually composed flow shell, and the bundled{" "}
+          Installed from{" "}
+          <code className="rounded bg-neutral-100 px-1 py-0.5 text-xs">khoralabs/react/obp</code> —
+          standalone detail panels, composed flow shell, and{" "}
           <code className="rounded bg-neutral-100 px-1 py-0.5 text-xs">DefaultLayout</code> preset.
         </p>
       </header>

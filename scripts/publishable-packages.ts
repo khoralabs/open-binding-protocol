@@ -11,7 +11,6 @@ export const PUBLISH_ORDER: PublishablePackage[] = [
   { name: "@khoralabs/obp-algebra", dir: "packages/algebra" },
   { name: "@khoralabs/obp-nbc", dir: "packages/nbc" },
   { name: "@khoralabs/obp-wire", dir: "packages/wire" },
-  { name: "@khoralabs/obp-react", dir: "packages/react" },
 ];
 
 export function isSemver(version: string): boolean {

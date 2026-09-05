@@ -8,7 +8,7 @@ Implementation packages. Protocol theory and Smithy live under [`docs/`](../docs
 | `algebra/` | `@khoralabs/obp-algebra` | `compose`, `parallel`, `hide`, `rename`, `choice`, port atoms, Merkle commitments; `./interface`, `./atom`, `./commitment`, `./intersection` |
 | `nbc/` | `@khoralabs/obp-nbc` | NBC bind rules (TypeScript), Standard Schema turn profiles; `./bind-policy` |
 | `wire/` | `@khoralabs/obp-wire` | Frame + session; `./http2`, `./ws` |
-| `react/` | `@khoralabs/obp-react` | NBC chain visualization |
+| `react/` | `@khoralabs/obp-react` | NBC chain UI (in-repo; prefer `khoralabs/react/obp` registry — not in release publish) |
 
 ```mermaid
 flowchart TB

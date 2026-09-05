@@ -85,7 +85,8 @@
       "name": "@khoralabs/obp-react-examples",
       "version": "0.0.0",
       "dependencies": {
-        "@khoralabs/obp-react": "workspace:*",
+        "@khoralabs/obp-core": "workspace:*",
+        "@khoralabs/obp-nbc": "workspace:*",
         "@xyflow/react": "^12.10.2",
         "bun-plugin-tailwind": "^0.1.2",
         "react": "^19",

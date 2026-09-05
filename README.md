@@ -45,7 +45,7 @@ A stack may be OBP-conformant without NBC. See [docs/theory/layering.md](docs/th
 | `@khoralabs/obp-algebra` | `compose` / `parallel` / `hide` / `rename` / `choice`, port atoms, Merkle library commitments; `./interface`, `./atom`, `./commitment`, `./intersection` |
 | `@khoralabs/obp-nbc` | NBC bind-time checks, `applyNbcTurn`, Standard Schema turn profiles; `./bind-policy` |
 | `@khoralabs/obp-wire` | Frame DAG + session Merkle log; `./http2`, `./ws` |
-| `@khoralabs/obp-react` | React NBC chain visualization (XYFlow) |
+| `@khoralabs/obp-react` | In-repo NBC chain UI (not published — prefer `khoralabs/react/obp` registry) |
 
 Package index: [`packages/README.md`](packages/README.md).
 
@@ -60,6 +60,8 @@ Published packages install individually, for example:
 ```bash
 npm install @khoralabs/obp-core
 ```
+
+Publish order (release): `obp-core` → `obp-algebra` → `obp-nbc` → `obp-wire` (see `scripts/publishable-packages.ts`). NBC chain React UI installs from the [`khoralabs/react`](https://github.com/khoralabs/react) registry.
 
 ## Development
 

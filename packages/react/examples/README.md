@@ -1,11 +1,13 @@
 # OBP React examples
 
-Live dev example for `@khoralabs/obp-react` — renders an NBC chain graph using XYFlow and Tailwind.
+Live demo for NBC chain UI installed from the [`khoralabs/react`](https://github.com/khoralabs/react) shadcn registry (`obp` kit)—XYFlow + Tailwind. Domain types come from `@khoralabs/obp-nbc`.
 
 ## Setup
 
 ```bash
 bun install
+# refresh UI from registry when needed:
+bunx shadcn@latest add khoralabs/react/obp --yes --overwrite
 ```
 
 ## Development
@@ -20,4 +22,4 @@ bun dev       # hot-reload dev server (Bun HMR)
 bun start     # NODE_ENV=production
 ```
 
-The example imports `@khoralabs/obp-react` from the workspace and renders a demo NBC chain graph sourced from `src/demo-graph.ts`. Edit that file to explore different graph shapes.
+Demo graph: `src/demo-graph.ts`. Host CSS owns `@import "tailwindcss"` and `@import "@xyflow/react/dist/style.css"`.

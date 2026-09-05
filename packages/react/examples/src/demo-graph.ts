@@ -1,4 +1,4 @@
-import type { NbcChainGraph } from "@khoralabs/obp-react";
+import type { NbcChainGraph } from "@khoralabs/obp-nbc";
 
 /** Small NBC chain with genesis → expose → bind → successor expose — matches layout tests. */
 export function demoNbcChainGraph(): NbcChainGraph {
